@@ -1,0 +1,88 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Prompt Airlock의 9월 조사 및 설계 진행상황, 10월 MVP 구현 계획, 11월 말까지의 개발 로드맵.">
+  <title>Prompt Airlock · 9월 진행상황 및 10월 계획</title>
+  <link rel="icon" href="../assets/airlock.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="./style.css">
+  <script src="./script.js" defer></script>
+</head>
+<body>
+  <div class="presentation">
+    <header class="presentation-header">
+      <a href="../" class="brand"><img src="../assets/airlock.svg" width="26" height="26" alt=""><span>Prompt Airlock</span></a>
+      <span class="project-year">2026 프로젝트 진행보고</span>
+    </header>
+
+    <main class="deck" aria-label="프로젝트 진행보고 슬라이드">
+      <section class="slide cover" id="slide-1" aria-labelledby="title-1">
+        <div class="cover-main">
+          <h1 id="title-1">Prompt <br><span>Airlock</span><span class="title-period" aria-hidden="true">.</span></h1>
+          <p class="subtitle">최신 대형 언어 모델을 위한 <br>정책 기반 개인정보 보호 게이트웨이</p>
+        </div>
+        <div class="boundary-art" aria-hidden="true">
+          <div class="boundary-line"></div><div class="boundary-door"><span>→</span></div><div class="boundary-line"></div>
+        </div>
+        <footer class="cover-footer"><p>9월 진행상황 및 10월 계획</p><time datetime="2026-10">2026.10</time></footer>
+      </section>
+
+      <section class="slide" id="slide-2" aria-labelledby="title-2" hidden>
+        <header class="slide-heading"><span class="section-number" aria-hidden="true">01 / 조사</span><h2 id="title-2">9월 <span>· 조사 및 설계</span></h2></header>
+        <ol class="research-grid">
+          <li><span class="item-number" aria-hidden="true">01</span><h3>공공부문 AI 보안 <br>요구사항 검토</h3></li>
+          <li><span class="item-number" aria-hidden="true">02</span><h3>최신 LLM의 <br>데이터 흐름 위험 분석</h3></li>
+          <li><span class="item-number" aria-hidden="true">03</span><h3>프롬프트 정제 <br>접근 방식 검토</h3></li>
+          <li><span class="item-number" aria-hidden="true">04</span><h3>개인정보 탐지 및 <br>가명처리 조사</h3></li>
+          <li><span class="item-number" aria-hidden="true">05</span><h3>게이트웨이 <br>아키텍처 정의</h3></li>
+          <li><span class="item-number" aria-hidden="true">06</span><h3>대규모 RAG를 사용하지 않는 <br>경량 아키텍처 선택</h3></li>
+        </ol>
+        <p class="takeaway"><span>조사 결과</span>핵심 아키텍처와 구현 방향 정의</p>
+      </section>
+
+      <section class="slide architecture" id="slide-3" aria-labelledby="title-3" hidden>
+        <header class="slide-heading"><span class="section-number" aria-hidden="true">02 / 제안 아키텍처</span><h2 id="title-3">게이트웨이 아키텍처</h2></header>
+        <div class="architecture-layout">
+          <p class="boundary-statement">프롬프트가 <br><em>신뢰 환경을 벗어나는</em> <br>경계를 보호합니다.</p>
+          <div class="flow" aria-label="제안 데이터 흐름: 사용자 입력부터 응답의 가명 복원까지">
+            <div class="flow-group"><h3><span>01</span> 정책</h3><ol start="1"><li>사용자</li><li class="accent-node">정책 검사</li></ol></div>
+            <div class="flow-group"><h3><span>02</span> 개인정보 <br>보호</h3><ol start="3"><li>개인정보 / 민감정보 탐지</li><li>가명 치환</li><li>잔여 민감정보 검사</li></ol></div>
+            <div class="flow-group"><h3><span>03</span> 외부 LLM <br>및 응답</h3><ol start="6"><li class="external-node">최신 LLM</li><li>응답 필터</li><li>가명 복원</li><li>사용자</li></ol></div>
+          </div>
+        </div>
+      </section>
+
+      <section class="slide" id="slide-4" aria-labelledby="title-4" hidden>
+        <header class="slide-heading"><span class="section-number" aria-hidden="true">03 / 다음 단계</span><h2 id="title-4">10월 <span>· MVP 구현</span></h2></header>
+        <ol class="implementation-list">
+          <li><span class="item-number" aria-hidden="true">01</span><h3>게이트웨이 기본 구조</h3></li>
+          <li><span class="item-number" aria-hidden="true">02</span><h3>정책 검사</h3></li>
+          <li><span class="item-number" aria-hidden="true">03</span><h3>개인정보 / 민감정보 탐지</h3></li>
+          <li><span class="item-number" aria-hidden="true">04</span><h3>가명처리 및 복원</h3></li>
+          <li><span class="item-number" aria-hidden="true">05</span><h3>최신 LLM API 중계</h3></li>
+          <li><span class="item-number" aria-hidden="true">06</span><h3>기본 종단 간 테스트</h3></li>
+        </ol>
+        <p class="takeaway"><span>핵심 목표</span>전체 흐름이 동작하는 MVP 구축</p>
+      </section>
+
+      <section class="slide" id="slide-5" aria-labelledby="title-5" hidden>
+        <header class="slide-heading"><span class="section-number" aria-hidden="true">04 / 개발 로드맵</span><h2 id="title-5">11월까지의 로드맵</h2></header>
+        <ol class="roadmap">
+          <li><span class="timeline-dot" aria-hidden="true"></span><h3>9월</h3><p class="phase">조사 및 아키텍처 설계</p><ul><li>요구사항 검토</li><li>관련 연구 조사</li><li>게이트웨이 설계</li></ul></li>
+          <li><span class="timeline-dot" aria-hidden="true"></span><h3>10월</h3><p class="phase">핵심 기능 구현</p><ul><li>개인정보 보호 파이프라인</li><li>API 중계</li><li>MVP 테스트</li></ul></li>
+          <li><span class="timeline-dot" aria-hidden="true"></span><h3>11월</h3><p class="phase">통합 및 평가</p><ul><li>탐지 성능 개선</li><li>개인정보 보호 / 활용성 테스트</li><li>지연시간 측정</li><li>안정화</li></ul></li>
+        </ol>
+        <p class="takeaway"><span>완료 목표</span>11월 말 개발 완료 예정</p>
+      </section>
+    </main>
+
+    <footer class="presentation-footer">
+      <span class="navigation-hint">← → <span class="desktop-hint"> / Space / 휠</span><span class="mobile-hint"> / 스와이프</span></span>
+      <nav class="slide-controls" aria-label="슬라이드 이동"><button type="button" id="previous" aria-label="이전 슬라이드" disabled>←</button><output id="slide-counter" aria-live="polite" aria-atomic="true">1 / 5</output><button type="button" id="next" aria-label="다음 슬라이드">→</button></nav>
+    </footer>
+    <div class="progress-track" role="progressbar" aria-label="슬라이드 진행상황" aria-valuemin="1" aria-valuemax="5" aria-valuenow="1"><div class="progress-fill"></div></div>
+  </div>
+  <noscript><p class="noscript-note">슬라이드를 넘기려면 JavaScript를 활성화해 주세요.</p></noscript>
+</body>
+</html>
