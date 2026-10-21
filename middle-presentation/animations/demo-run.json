@@ -1,0 +1,125 @@
+{
+  "started": "2026-10-21T23:30:15.792Z",
+  "gateway": "https://localhost:18443",
+  "mock": "https://127.0.0.1:19443",
+  "scenes": [
+    {
+      "name": "등급 S 요청",
+      "text": "회의 안건 정리",
+      "grade": "S",
+      "status": 403,
+      "ms": 407,
+      "response": {
+        "error": {
+          "code": "grade_sensitive",
+          "message": "This request's data grade cannot be sent to an external model.",
+          "param": null,
+          "type": "permission_error"
+        }
+      },
+      "egress": []
+    },
+    {
+      "name": "주민번호·카드",
+      "text": "제 주민번호는 900101-1234567 이고 카드는 4111-1111-1111-1111 입니다",
+      "grade": null,
+      "status": 400,
+      "ms": 408,
+      "response": {
+        "error": {
+          "blocked_types": [
+            "KOREAN_RRN",
+            "CARD_NUMBER"
+          ],
+          "code": "entity_blocked",
+          "message": "The prompt contains information that cannot be sent.",
+          "param": null,
+          "type": "invalid_request_error"
+        }
+      },
+      "egress": []
+    },
+    {
+      "name": "이름·전화·이메일",
+      "text": "한빛시청 김민준 주무관에게 010-2345-6789 또는 user1@example.invalid 로 회의 일정을 알려 주세요",
+      "grade": null,
+      "status": 200,
+      "ms": 456,
+      "response": {
+        "choices": [
+          {
+            "finish_reason": "stop",
+            "index": 0,
+            "message": {
+              "content": "받은 질문: 한빛시청 김민준 주무관에게 010-2345-6789 또는 user1@example.invalid 로 회의 일정을 알려 주세요"
+            }
+          }
+        ],
+        "created": 1792625417,
+        "id": "chatcmpl-pa-639ddcad62cc9655c01b7e54",
+        "model": "demo-model",
+        "object": "chat.completion",
+        "usage": {
+          "completion_tokens": 0,
+          "prompt_tokens": 0,
+          "total_tokens": 0
+        }
+      },
+      "egress": [
+        "⟦INTERNAL_TERM_XQCNQW21RW⟧ ⟦PERSON_SDVETZ99F2⟧ 주무관에게 ⟦KOREAN_PHONE_G0AD2NHNSG⟧ 또는 ⟦EMAIL_B4AE18ZA2B⟧ 로 회의 일정을 알려 주세요"
+      ]
+    },
+    {
+      "name": "링크 속 token",
+      "text": "[링크] 김민준 주무관 연락처 010-2345-6789 자료 정리",
+      "grade": null,
+      "status": 502,
+      "ms": 410,
+      "response": {
+        "error": {
+          "code": "response_token_in_link",
+          "message": "The model response was rejected by the gateway.",
+          "param": null,
+          "type": "api_error"
+        }
+      },
+      "egress": [
+        "[링크] ⟦PERSON_2CET5ST5NB⟧ 주무관 연락처 ⟦KOREAN_PHONE_43DWQJ91G0⟧ 자료 정리"
+      ]
+    },
+    {
+      "name": "base64 로 감싼 주민번호",
+      "text": "확인 부탁: OTAwMTAxLTEyMzQ1Njc=",
+      "grade": null,
+      "status": 400,
+      "ms": 401,
+      "response": {
+        "error": {
+          "code": "encoded_target",
+          "message": "The prompt contains information that cannot be sent.",
+          "param": null,
+          "type": "invalid_request_error"
+        }
+      },
+      "egress": []
+    },
+    {
+      "name": "바뀐 token",
+      "text": "[변형] 김민준 주무관 연락처 010-2345-6789 전달",
+      "grade": null,
+      "status": 502,
+      "ms": 412,
+      "response": {
+        "error": {
+          "code": "response_token_unresolved",
+          "message": "The model response was rejected by the gateway.",
+          "param": null,
+          "type": "api_error"
+        }
+      },
+      "egress": [
+        "[변형] ⟦PERSON_44ZG3XVY9F⟧ 주무관 연락처 ⟦KOREAN_PHONE_RC9MDBX0YY⟧ 전달"
+      ]
+    }
+  ]
+}
