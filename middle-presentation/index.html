@@ -1,0 +1,153 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Prompt Airlock 중간 발표: 문제, 기존 구조(LiteLLM, Presidio)와의 비교, 설계, 시연, 검증 결과, 다음 계획.">
+  <title>Prompt Airlock · 중간 발표</title>
+  <link rel="icon" href="../assets/airlock.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="./style.css">
+  <script src="./script.js" defer></script>
+</head>
+<body>
+  <div class="presentation">
+    <header class="presentation-header">
+      <a href="../" class="brand"><span>Prompt Airlock</span></a>
+      <span class="project-year">2026 중간 발표</span>
+    </header>
+
+    <main class="deck" aria-label="중간 발표 슬라이드">
+      <section class="slide" id="slide-1" aria-labelledby="title-1">
+        <header class="slide-heading"><h1 id="title-1">Prompt Airlock</h1></header>
+        <ul class="content-list">
+          <li>공공기관이 외부 LLM 을 쓸 때 개인정보가 밖으로 나가지 않게 하는 한국어 보안 게이트웨이</li>
+          <li>지금까지: 입력부터 응답까지 끝까지 동작하는 MVP 와 시연</li>
+        </ul>
+        <p class="takeaway">C++23 게이트웨이 + Rust Vault · 2026 중간 발표</p>
+      </section>
+
+      <section class="slide" id="slide-2" aria-labelledby="title-2" hidden>
+        <header class="slide-heading"><h2 id="title-2">문제</h2></header>
+        <ul class="content-list">
+          <li>업무 질문에 이름·전화·주민번호가 섞여 외부 LLM 으로 그대로 나간다</li>
+          <li>지우기만 하면 질문의 뜻이 망가진다 → 가명으로 바꿔 보내고 답에서 되돌려야 한다</li>
+          <li>공공기관 지침: 입력·응답의 민감정보 탐지·차단, 정해진 형식만 외부 전송</li>
+        </ul>
+        <p class="takeaway">근거: 국가정보원 외부 언어모델 보안 가이드라인(2023), 국가망 보안체계(N2SF)</p>
+      </section>
+
+      <section class="slide" id="slide-3" aria-labelledby="title-3" hidden>
+        <header class="slide-heading"><h2 id="title-3">이미 있는 구조 ① LiteLLM 프록시</h2></header>
+        <ul class="content-list">
+          <li>Chat Completions 호환 프록시 하나로 여러 provider 를 중계</li>
+          <li>가드레일 훅: pre_call(요청 전), post_call(응답 뒤), logging_only</li>
+          <li>PII 마스킹은 Presidio 를 별도 서비스로 불러서 처리, output_parse_pii 로 답의 자리표시자를 되돌림</li>
+        </ul>
+        <p class="takeaway">출처: LiteLLM 공식 문서 Guardrails › PII Masking (Presidio)</p>
+      </section>
+
+      <section class="slide" id="slide-4" aria-labelledby="title-4" hidden>
+        <header class="slide-heading"><h2 id="title-4">이미 있는 구조 ② Presidio</h2></header>
+        <ul class="content-list">
+          <li>Analyzer: 정규식·체크섬·NER recognizer 로 개인정보 위치를 찾음</li>
+          <li>Anonymizer: 치환·마스킹·해시·암호화 등으로 바꿈</li>
+          <li>언어는 설정으로 정함(LiteLLM 기본 en). 한국어 형식(주민번호, 국내 계좌·전화)은 직접 추가해야 함</li>
+        </ul>
+        <p class="takeaway">출처: microsoft/presidio 저장소와 문서</p>
+      </section>
+
+      <section class="slide" id="slide-5" aria-labelledby="title-5" hidden>
+        <header class="slide-heading"><h2 id="title-5">같은 문제, 다른 선택</h2></header>
+        <table class="compare">
+          <thead><tr><th>항목</th><th>LiteLLM + Presidio 가드레일</th><th>Prompt Airlock</th></tr></thead>
+          <tbody>
+            <tr><td>목표</td><td>범용 프록시에 붙이는 선택 기능</td><td>공공기관 외부 전송 통제 전용</td></tr>
+            <tr><td>한국어</td><td>언어 설정·recognizer 추가로 확장</td><td>국내 형식표 + 한국어 NER 내장</td></tr>
+            <tr><td>가명</td><td>자리표시자 치환</td><td>요청마다 무작위 token, 별도 Rust Vault 프로세스에만 매핑</td></tr>
+            <tr><td>실패 때</td><td>문서에 명시 없음</td><td>탐지·Vault·잔여 검사 실패 = 거절, provider 호출 0</td></tr>
+            <tr><td>응답</td><td>자리표시자 되돌림</td><td>다시 탐지, 링크 속 token·바뀐 token 은 응답 거절</td></tr>
+            <tr><td>등급</td><td>-</td><td>C·S 등급은 외부 전송 자체를 막음</td></tr>
+          </tbody>
+        </table>
+      </section>
+
+      <section class="slide architecture" id="slide-6" aria-labelledby="title-6" hidden>
+        <header class="slide-heading"><h2 id="title-6">내 설계</h2></header>
+        <div class="architecture-layout">
+          <p class="boundary-statement">모든 단계를 통과해야만 provider 로 나간다.<br><br>하나라도 실패하면 막는다(fail closed).</p>
+          <div class="flow" aria-label="요청부터 응답까지 처리 순서">
+            <div class="flow-group"><h3>입구</h3><ol start="1"><li>TLS·출처 인증</li><li class="accent-node">등급 확인</li></ol></div>
+            <div class="flow-group"><h3>보호</h3><ol start="3"><li>탐지(규칙 + 한국어 NER)</li><li>Vault 가명(별도 프로세스)</li><li>잔여 검사</li></ol></div>
+            <div class="flow-group"><h3>외부와 응답</h3><ol start="6"><li class="external-node">provider</li><li>응답 검사</li><li>같은 범위에서 복원</li></ol></div>
+          </div>
+        </div>
+      </section>
+
+      <section class="slide" id="slide-7" aria-labelledby="title-7" hidden>
+        <header class="slide-heading"><h2 id="title-7">타입으로 막는 경계</h2></header>
+        <div class="two-col">
+          <ul class="content-list">
+            <li>RawPrompt → PolicyChecked → Protected → VerifiedPrompt</li>
+            <li>provider 요청은 VerifiedPrompt 로만 만들 수 있음(어기면 컴파일 실패)</li>
+            <li>바뀐 token 은 비슷해도 복원하지 않음</li>
+          </ul>
+          <div>
+            <video class="clip" src="./media/FailClosed.mp4" poster="./media/FailClosed.png" controls muted playsinline preload="metadata"></video>
+            <img class="clip-poster" src="./media/FailClosed.png" alt="단계마다 실패하면 provider 호출 없이 거절하는 그림">
+          </div>
+        </div>
+      </section>
+
+      <section class="slide" id="slide-8" aria-labelledby="title-8" hidden>
+        <header class="slide-heading"><h2 id="title-8">시연</h2></header>
+        <div class="two-col">
+          <ol class="content-list">
+            <li>등급 S → 403</li>
+            <li>주민번호·카드 → 400, 종류만 알림</li>
+            <li>이름·전화·이메일 → token 으로 나가고 복원</li>
+            <li>링크 속 token → 응답 거절</li>
+            <li>base64 로 감싼 주민번호 → 400</li>
+            <li>바뀐 token → 복원 안 함</li>
+          </ol>
+          <div>
+            <video class="clip" src="./media/PipelineSample.mp4" poster="./media/PipelineSample.png" controls muted playsinline preload="metadata"></video>
+            <img class="clip-poster" src="./media/PipelineSample.png" alt="원문이 token 으로 나가고 답에서 원래 값으로 돌아오는 그림">
+          </div>
+        </div>
+      </section>
+
+      <section class="slide" id="slide-9" aria-labelledby="title-9" hidden>
+        <header class="slide-heading"><h2 id="title-9">검증 결과</h2></header>
+        <table class="compare">
+          <tbody>
+            <tr><td>시험</td><td>319개 통과, sanitizer·fuzz(요청 JSON 60초 488만 회 등)</td></tr>
+            <tr><td>NER</td><td>사람 재현율 0.987, 기관 0.910, 256 token p95 30 ms (#108)</td></tr>
+            <tr><td>모델 교체 검토</td><td>후보 2개 4 구성 측정, 지연 10배 이상 → 지금 모델 유지 (#110)</td></tr>
+            <tr><td>끝까지 지연</td><td>NER 없이 4 KiB p95 5.8 ms, NER 포함 짧은 질문 p95 21.6 ms (#119)</td></tr>
+            <tr><td>동시 8개</td><td>오류 0, 약 115 req/s (#119)</td></tr>
+            <tr><td>egress</td><td>시연 6장면 모두 provider 기록에 원문 0</td></tr>
+          </tbody>
+        </table>
+        <p class="source">숫자 출처: github.com/robinhood0107/PromptAirlock 이슈 번호</p>
+      </section>
+
+      <section class="slide" id="slide-10" aria-labelledby="title-10" hidden>
+        <header class="slide-heading"><h2 id="title-10">한계와 다음 계획</h2></header>
+        <ul class="content-list">
+          <li>가려지지 않은 이름 13/600(2.2%) → 기관 보호어 목록으로 보완</li>
+          <li>감사 기록·운영 기능 → 다음 단계</li>
+          <li>요청 단위 시간 상한·취소, 실제 provider 연결, 평가, 배포</li>
+        </ul>
+        <p class="takeaway">감사합니다</p>
+      </section>
+    </main>
+
+    <footer class="presentation-footer">
+      <span class="navigation-hint">← → <span class="desktop-hint"> / Space / 휠</span><span class="mobile-hint"> / 스와이프</span></span>
+      <nav class="slide-controls" aria-label="슬라이드 이동"><button type="button" id="previous" aria-label="이전 슬라이드" disabled>←</button><output id="slide-counter" aria-live="polite" aria-atomic="true">1 / 10</output><button type="button" id="next" aria-label="다음 슬라이드">→</button></nav>
+    </footer>
+    <div class="progress-track" role="progressbar" aria-label="슬라이드 진행상황" aria-valuemin="1" aria-valuemax="10" aria-valuenow="1"><div class="progress-fill"></div></div>
+  </div>
+  <noscript><p class="noscript-note">슬라이드를 넘기려면 JavaScript를 활성화해 주세요.</p></noscript>
+</body>
+</html>

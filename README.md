@@ -4,6 +4,7 @@
 
 - 진행보고 아카이브: https://robinhood0107.github.io/prompt-airlock-webslide/
 - 10월 제출용 슬라이드: https://robinhood0107.github.io/prompt-airlock-webslide/2026-10/
+- 중간 발표 슬라이드: https://robinhood0107.github.io/prompt-airlock-webslide/middle-presentation/ (대본 middle-presentation/script.md, 애니메이션은 middle-presentation/animations 에서 `manim -qm --format=mp4 scenes.py PipelineSample FailClosed`)
 
 ## 파일 구성
 
