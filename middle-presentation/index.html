@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="description" content="Prompt Airlock 중간 발표: 문제, 기존 도구(LiteLLM, Presidio)와의 비교, 설계, 실제 시연, 검증 결과, 다음 계획.">
+  <meta name="description" content="Prompt Airlock 중간 발표: 문제, 기존 도구(LiteLLM, Presidio)와의 비교, 설계, 시연, 검증 결과, 다음 계획.">
   <title>Prompt Airlock · 중간 발표</title>
   <link rel="icon" href="../assets/airlock.svg" type="image/svg+xml">
   <link rel="stylesheet" href="./style.css">
@@ -17,127 +17,130 @@
     </header>
 
     <main class="deck" aria-label="중간 발표 슬라이드">
-      <section class="slide hero" id="slide-1" aria-labelledby="title-1">
-        <h1 id="title-1">Prompt Airlock</h1>
-        <p class="subtitle">외부 LLM 채팅 서비스에 질문을 보내기 전에<br>개인정보를 가려 주는 "공기 차단실(에어록)"</p>
-        <div class="chips"><span class="chip">한국어 개인정보</span><span class="chip">가명으로 바꿔 보내기</span><span class="chip">답에서 되돌리기</span><span class="chip">고장 나면 막기</span></div>
+      <section class="slide" id="slide-1" aria-labelledby="title-1">
+        <header class="slide-heading"><h1 id="title-1">Prompt Airlock 중간 발표</h1></header>
+        <ul class="content-list">
+          <li>공공기관용 외부 LLM 개인정보 보호 게이트웨이</li>
+          <li>10월 진행 결과: 입력부터 응답까지 동작하는 MVP 구현과 시연</li>
+        </ul>
       </section>
 
       <section class="slide" id="slide-2" aria-labelledby="title-2" hidden>
-        <header class="slide-heading"><h2 id="title-2">무엇이 문제인가</h2></header>
-        <div class="cards">
-          <div class="card warn"><b>그대로 나간다</b>"김민준 주무관에게 010-2345-6789 로 연락" 같은 질문이 외부 회사 서버로 그대로 갑니다.</div>
-          <div class="card"><b>지우면 뜻이 사라진다</b>이름과 번호를 지우면 "누구에게 연락하라는지" 모르는 질문이 됩니다.</div>
-          <div class="card ok"><b>그래서</b>진짜 값 대신 가짜 이름표(가명)를 붙여 보내고, 답이 오면 다시 진짜 값으로 바꿉니다.</div>
-        </div>
-        <p class="takeaway">공공기관 지침도 "입력과 답의 민감정보를 찾아 막고, 정해진 형식만 밖으로 보내라"고 요구합니다(국가정보원 외부 언어모델 보안 가이드라인, 국가망 보안체계 N2SF).</p>
+        <header class="slide-heading"><h2 id="title-2">문제</h2></header>
+        <ul class="content-list">
+          <li>업무 질문에 이름, 전화번호, 주민등록번호가 섞인 채 외부 LLM 으로 전송됨</li>
+          <li>개인정보를 삭제하면 "누구에게 연락할지" 같은 질문의 의미가 사라짐</li>
+          <li>방향: 개인정보를 가명으로 바꿔 보내고, 응답에서 원래 값으로 복원</li>
+        </ul>
+        <p class="takeaway">근거: 국가정보원 외부 언어모델 보안 가이드라인(2023), 국가망 보안체계(N2SF) — 입력·응답의 민감정보 탐지와 차단 요구</p>
       </section>
 
       <section class="slide" id="slide-3" aria-labelledby="title-3" hidden>
-        <header class="slide-heading"><h2 id="title-3">먼저 알아 둘 말 3개</h2></header>
+        <header class="slide-heading"><h2 id="title-3">용어</h2></header>
         <div class="cards">
-          <div class="card"><b>LLM · provider</b>대화형 언어모델과, 그 모델을 인터넷으로 빌려주는 회사입니다. 우리 기관 밖에 있습니다.</div>
-          <div class="card"><b>게이트웨이(프록시)</b>앱과 provider 사이에 서서 모든 요청을 대신 전달하는 "중간 창구"입니다. 여기서 검사하면 모든 요청을 한곳에서 통제할 수 있습니다.</div>
-          <div class="card"><b>가명 token</b>진짜 값 대신 넣는 이름표입니다. 예: 김민준 → ⟦PERSON_PYZHWD8MSY⟧. 짝은 우리 쪽 금고(Vault)에만 적어 둡니다.</div>
+          <div class="card"><b>provider</b>외부 LLM 을 API 로 제공하는 회사. 기관 밖에 있음.</div>
+          <div class="card"><b>게이트웨이</b>기관 앱과 provider 사이에서 요청을 대신 전달하는 서버. 모든 요청이 거쳐 가므로 한곳에서 검사 가능.</div>
+          <div class="card"><b>가명 token</b>원래 값 대신 넣는 임의 문자열. 예: 김민준 → ⟦PERSON_PYZHWD8MSY⟧. 원래 값과의 대응은 별도 Vault 프로세스에만 보관.</div>
         </div>
       </section>
 
       <section class="slide" id="slide-4" aria-labelledby="title-4" hidden>
-        <header class="slide-heading"><h2 id="title-4">이미 있는 도구 ① LiteLLM</h2></header>
-        <div class="cards">
-          <div class="card"><b>무엇인가</b>여러 LLM 회사를 하나의 같은 주소로 쓸 수 있게 해 주는 공개 "중간 창구" 프로그램입니다.</div>
-          <div class="card"><b>검문 지점(가드레일)</b>요청을 보내기 전(pre_call)과 답을 받은 뒤(post_call)에 검사 프로그램을 끼울 수 있습니다.</div>
-          <div class="card"><b>개인정보 가리기</b>검사 프로그램으로 Presidio 를 따로 띄워 부릅니다. 옵션(output_parse_pii)을 켜면 답에 있는 이름표를 진짜 값으로 되돌립니다.</div>
-        </div>
+        <header class="slide-heading"><h2 id="title-4">기존 도구 ① LiteLLM</h2></header>
+        <ul class="content-list">
+          <li>여러 provider 를 같은 API 형식으로 쓰게 해 주는 공개 프록시 서버</li>
+          <li>요청 전(pre_call)과 응답 후(post_call)에 검사 기능(가드레일)을 연결할 수 있음</li>
+          <li>개인정보 마스킹은 Presidio 를 별도 서비스로 호출해 처리, output_parse_pii 옵션으로 응답의 자리표시자를 원래 값으로 복원</li>
+        </ul>
         <p class="takeaway">출처: LiteLLM 공식 문서 Guardrails › PII Masking (Presidio)</p>
       </section>
 
       <section class="slide" id="slide-5" aria-labelledby="title-5" hidden>
-        <header class="slide-heading"><h2 id="title-5">이미 있는 도구 ② Presidio</h2></header>
-        <div class="cards">
-          <div class="card"><b>찾는 쪽(Analyzer)</b>"010-…" 같은 모양 규칙, 숫자 검산, 문장 속 이름을 알아보는 모델(NER, 이름 인식 모델)로 개인정보 위치를 찾습니다.</div>
-          <div class="card"><b>바꾸는 쪽(Anonymizer)</b>찾은 자리를 가리기·바꾸기·암호화 같은 방법으로 처리합니다.</div>
-          <div class="card warn"><b>한국어에서는</b>LiteLLM 연동의 기본 언어가 영어(en)라서 주민번호·국내 계좌·전화 같은 한국 형식은 직접 만들어 넣어야 합니다.</div>
-        </div>
-        <p class="takeaway">Microsoft 가 공개한 잘 만든 범용 도구입니다. 제 설계도 이 "찾기 → 바꾸기" 구조를 기준점으로 삼았습니다.</p>
+        <header class="slide-heading"><h2 id="title-5">기존 도구 ② Presidio</h2></header>
+        <ul class="content-list">
+          <li>Analyzer: 정규식, 체크섬, NER(문장 속 이름을 찾는 모델)로 개인정보 위치 탐지</li>
+          <li>Anonymizer: 찾은 위치를 치환, 마스킹, 해시, 암호화 등으로 변환</li>
+          <li>LiteLLM 연동의 기본 언어는 영어. 주민등록번호, 국내 계좌·전화 형식은 직접 추가 필요</li>
+        </ul>
+        <p class="takeaway">Microsoft 공개 도구. 본 설계의 "탐지 → 변환" 구조도 이를 참고함</p>
       </section>
 
       <section class="slide" id="slide-6" aria-labelledby="title-6" hidden>
-        <header class="slide-heading"><h2 id="title-6">같은 문제, 다른 선택</h2></header>
+        <header class="slide-heading"><h2 id="title-6">LiteLLM + Presidio 와의 차이</h2></header>
         <div class="two-col">
           <table class="compare">
-            <thead><tr><th>질문</th><th>LiteLLM + Presidio</th><th>Prompt Airlock</th></tr></thead>
+            <thead><tr><th>항목</th><th>LiteLLM + Presidio</th><th>Prompt Airlock</th></tr></thead>
             <tbody>
-              <tr><td>한국 형식</td><td>직접 추가</td><td>기본 내장</td></tr>
-              <tr><td>짝 보관</td><td>프록시 안</td><td>따로 떨어진 금고(Vault)</td></tr>
-              <tr><td>검사기가 고장 나면</td><td>문서에 없음</td><td>무조건 막음</td></tr>
-              <tr><td>답 검사</td><td>이름표만 되돌림</td><td>다시 검사 후 되돌림</td></tr>
-              <tr><td>비밀 등급(C·S)</td><td>-</td><td>밖으로 안 보냄</td></tr>
+              <tr><td>한국 형식</td><td>직접 추가</td><td>형식표·한국어 NER 내장</td></tr>
+              <tr><td>대응 보관</td><td>프록시 내부</td><td>별도 Vault 프로세스</td></tr>
+              <tr><td>검사기 장애 시</td><td>문서에 명시 없음</td><td>요청 거절</td></tr>
+              <tr><td>응답 처리</td><td>자리표시자 복원</td><td>재검사 후 복원</td></tr>
+              <tr><td>기밀 등급(C·S)</td><td>-</td><td>외부 전송 차단</td></tr>
             </tbody>
           </table>
           <div>
             <video class="clip" src="./media/CompareFlow.mp4" poster="./media/CompareFlow.png" controls muted playsinline preload="metadata"></video>
-            <img class="clip-poster" src="./media/CompareFlow.png" alt="두 구조의 처리 단계를 나란히 놓은 그림">
+            <img class="clip-poster" src="./media/CompareFlow.png" alt="두 구조의 처리 단계 비교">
           </div>
         </div>
       </section>
 
       <section class="slide architecture" id="slide-7" aria-labelledby="title-7" hidden>
-        <header class="slide-heading"><h2 id="title-7">내 설계: 8단계 검문소</h2></header>
+        <header class="slide-heading"><h2 id="title-7">처리 순서</h2></header>
         <div class="architecture-layout">
-          <p class="boundary-statement">모든 검문을 통과한 질문만 밖으로 나간다.<br><br>하나라도 실패하면 막는다.<br>(fail closed: "모르면 닫는다")</p>
+          <p class="boundary-statement">모든 검사를 통과한 요청만 provider 로 전송한다.<br><br>어느 단계든 실패하면 요청을 거절한다(fail closed).</p>
           <div class="flow" aria-label="요청부터 응답까지 처리 순서">
-            <div class="flow-group"><h3>들어오기</h3><ol start="1"><li>암호화 연결·앱 확인</li><li class="accent-node">비밀 등급 확인</li></ol></div>
-            <div class="flow-group"><h3>가리기</h3><ol start="3"><li>개인정보 찾기(규칙 + 한국어 이름 인식 모델)</li><li>금고에서 가명 받기</li><li>남은 원문 다시 찾기</li></ol></div>
-            <div class="flow-group"><h3>보내고 받기</h3><ol start="6"><li class="external-node">provider</li><li>답 검사</li><li>같은 요청 것만 되돌리기</li></ol></div>
+            <div class="flow-group"><h3>입구</h3><ol start="1"><li>TLS·출처 인증</li><li class="accent-node">등급 확인</li></ol></div>
+            <div class="flow-group"><h3>개인정보 <br>보호</h3><ol start="3"><li>탐지(규칙 + 한국어 NER)</li><li>Vault 가명 발급</li><li>잔여 검사</li></ol></div>
+            <div class="flow-group"><h3>외부 LLM <br>및 응답</h3><ol start="6"><li class="external-node">provider</li><li>응답 검사</li><li>같은 요청 범위에서 복원</li></ol></div>
           </div>
         </div>
       </section>
 
       <section class="slide" id="slide-8" aria-labelledby="title-8" hidden>
-        <header class="slide-heading"><h2 id="title-8">가명이 오가는 모습</h2></header>
+        <header class="slide-heading"><h2 id="title-8">가명 처리와 복원</h2></header>
         <div class="two-col">
           <ul class="content-list">
-            <li>밖으로는 이름표만 나갑니다</li>
-            <li>답이 오면 같은 요청에서 만든 이름표만 진짜 값으로 바꿉니다</li>
-            <li>한 글자라도 바뀐 이름표는 비슷해도 되돌리지 않습니다(엉뚱한 값이 나가지 않게)</li>
+            <li>외부로는 token 만 전송</li>
+            <li>응답의 token 은 같은 요청에서 발급한 것만 복원</li>
+            <li>한 글자라도 바뀐 token 은 복원하지 않음</li>
           </ul>
           <div>
             <video class="clip" src="./media/PipelineSample.mp4" poster="./media/PipelineSample.png" controls muted playsinline preload="metadata"></video>
-            <img class="clip-poster" src="./media/PipelineSample.png" alt="원문이 token 으로 나가고 답에서 원래 값으로 돌아오는 그림">
+            <img class="clip-poster" src="./media/PipelineSample.png" alt="원문이 token 으로 나가고 응답에서 복원되는 과정">
           </div>
         </div>
       </section>
 
       <section class="slide" id="slide-9" aria-labelledby="title-9" hidden>
-        <header class="slide-heading"><h2 id="title-9">실수를 코드가 막게 하기</h2></header>
+        <header class="slide-heading"><h2 id="title-9">타입으로 막는 경계</h2></header>
         <div class="two-col">
-          <div class="cards" style="grid-template-columns:1fr">
-            <div class="card"><b>타입 = 서류 도장</b>질문은 4단계 "서류"로만 바뀝니다. 마지막 도장(VerifiedPrompt)이 찍힌 서류만 밖으로 보낼 수 있고, 건너뛰면 프로그램이 아예 만들어지지 않습니다(컴파일 실패).</div>
-            <div class="card warn"><b>고장 나면 닫기</b>검사기·금고가 고장 나도 "그냥 보내기" 길이 없습니다.</div>
-          </div>
+          <ul class="content-list">
+            <li>질문은 RawPrompt → PolicyChecked → Protected → VerifiedPrompt 순서로만 변환</li>
+            <li>provider 요청은 VerifiedPrompt 로만 생성 가능, 단계를 건너뛰면 컴파일 실패</li>
+            <li>탐지기·Vault 장애 시에도 우회 경로 없음</li>
+          </ul>
           <div>
             <video class="clip" src="./media/Typestate.mp4" poster="./media/Typestate.png" controls muted playsinline preload="metadata"></video>
-            <img class="clip-poster" src="./media/Typestate.png" alt="네 단계 타입과 provider 로 가는 유일한 길">
+            <img class="clip-poster" src="./media/Typestate.png" alt="네 단계 타입과 provider 요청 생성 경로">
             <video class="clip" src="./media/FailClosed.mp4" poster="./media/FailClosed.png" controls muted playsinline preload="metadata" style="margin-top:1cqh"></video>
           </div>
         </div>
       </section>
 
       <section class="slide demo-slide" id="slide-10" aria-labelledby="title-10" hidden>
-        <header class="slide-heading"><h2 id="title-10">시연: 실제로 띄워서 보낸 6가지 질문</h2></header>
+        <header class="slide-heading"><h2 id="title-10">시연</h2></header>
         <div class="demo-grid">
           <ol>
-            <li>비밀 등급 S → 403, 바로 막음</li>
-            <li>주민번호·카드 → 400, 종류만 알려 줌</li>
-            <li>이름·전화·이메일 → 이름표로 나가고 되돌아옴</li>
-            <li>답의 링크 안에 이름표 → 답을 막음</li>
-            <li>base64(글자를 영문·숫자로 바꾼 포장)로 숨긴 주민번호 → 풀어서 찾아 막음</li>
-            <li>한 글자 바뀐 이름표 → 되돌리지 않음</li>
+            <li>등급 S 요청 → 403</li>
+            <li>주민등록번호·카드번호 → 400, 종류만 응답</li>
+            <li>이름·전화·이메일 → token 으로 전송 후 복원</li>
+            <li>응답의 링크 안 token → 응답 거절</li>
+            <li>base64 로 인코딩한 주민등록번호 → 400</li>
+            <li>변조된 token → 복원하지 않음</li>
           </ol>
           <div>
             <video class="clip" src="./media/DemoReplay.mp4" poster="./media/DemoReplay.png" controls muted playsinline preload="metadata"></video>
-            <p class="source">실제 게이트웨이(127.0.0.1:18443)와 시험용 provider(19443)를 띄워 보낸 기록을 그대로 재생합니다. 발표 때는 같은 명령으로 현장 시연합니다.</p>
+            <p class="source">게이트웨이(127.0.0.1:18443)와 mock provider(19443)를 실제로 실행해 기록한 결과</p>
           </div>
         </div>
       </section>
@@ -145,24 +148,23 @@
       <section class="slide" id="slide-11" aria-labelledby="title-11" hidden>
         <header class="slide-heading"><h2 id="title-11">검증 결과</h2></header>
         <div class="metrics">
-          <div class="metric"><span class="big-number">319개</span><small>자동 시험 모두 통과 + 무작위 입력 시험(fuzz) 수백만 회</small></div>
-          <div class="metric"><span class="big-number">98.7%</span><small>사람 이름을 찾은 비율(최종 시험 문장 300개)</small></div>
-          <div class="metric"><span class="big-number">0건</span><small>시연 6장면에서 밖으로 나간 원문</small></div>
-          <div class="metric"><span class="big-number">21.6 ms</span><small>짧은 질문 하나 처리 시간(이름 인식 모델 포함, 95% 기준)</small></div>
-          <div class="metric"><span class="big-number">5.8 ms</span><small>4 KiB 질문, 규칙만 쓸 때(목표 20 ms 이하)</small></div>
-          <div class="metric"><span class="big-number">0 오류</span><small>동시에 8개씩 보낼 때, 초당 약 115건</small></div>
+          <div class="metric"><span class="big-number">319개</span><small>자동 시험 통과, fuzz 병행</small></div>
+          <div class="metric"><span class="big-number">0.987</span><small>사람 이름 재현율(최종 시험 셋 300문장)</small></div>
+          <div class="metric"><span class="big-number">0건</span><small>시연 6장면의 외부 전송 원문</small></div>
+          <div class="metric"><span class="big-number">21.6 ms</span><small>짧은 질문 p95(NER 포함)</small></div>
+          <div class="metric"><span class="big-number">5.8 ms</span><small>4 KiB 질문 p95(NER 없이, 목표 20 ms)</small></div>
+          <div class="metric"><span class="big-number">오류 0</span><small>동시 8개 요청, 약 115 req/s</small></div>
         </div>
-        <p class="source">출처: github.com/robinhood0107/PromptAirlock 이슈 #108(이름 찾기), #110(더 큰 모델 비교), #119(속도)</p>
+        <p class="source">출처: github.com/robinhood0107/PromptAirlock 이슈 #108, #110, #119</p>
       </section>
 
-      <section class="slide ending" id="slide-12" aria-labelledby="title-12" hidden>
+      <section class="slide" id="slide-12" aria-labelledby="title-12" hidden>
         <header class="slide-heading"><h2 id="title-12">한계와 다음 계획</h2></header>
         <ul class="content-list">
-          <li>이름 600개 중 13개(2.2%)는 아직 못 찾음 → 기관·거래처 이름을 "보호어 목록"에 넣어 보완</li>
-          <li>더 큰 모델은 조금 더 잘 찾지만 10배 이상 느려서 지금 모델을 유지</li>
-          <li>다음: 감사 기록·운영 기능, 요청마다 시간 제한, 실제 provider 연결과 평가</li>
+          <li>탐지하지 못한 이름 13/600(2.2%) → 기관·거래처 이름을 보호어 목록으로 보완</li>
+          <li>더 큰 NER 모델은 지연 10배 이상 증가 → 현재 모델 유지</li>
+          <li>다음: 감사 기록·운영 기능, 요청 단위 시간 제한, 실제 provider 연결과 평가</li>
         </ul>
-        <p class="takeaway">감사합니다</p>
       </section>
     </main>
 

@@ -123,33 +123,16 @@ h3 { font-weight: 600; }
 .clip-poster { display: none; width: 100%; max-height: 58cqh; object-fit: contain; border: 1px solid var(--line); }
 @media (max-width: 700px) { .two-col { grid-template-columns: 1fr; } }
 
-/* 중간 발표 디자인 보강: 색 띠, 카드, 표지·마무리 강조, 큰 시연 화면 */
-:root { --accent-2: #0f9d8a; --soft: #eef3fb; --warn: #b3261e; }
-.slide { position: relative; }
-.slide::before { content: ""; position: absolute; left: 0; top: 0; width: 100%; height: .9cqh; background: linear-gradient(90deg, var(--accent), var(--accent-2)); }
-.slide-heading h2 { font-size: clamp(24px, 3.2cqw, 44px); letter-spacing: -.03em; }
-.slide-heading h2::after { content: ""; display: block; width: 6cqw; height: .5cqh; margin-top: 1.2cqh; background: var(--accent-2); }
-.hero { color: #fff; background: radial-gradient(circle at 80% 20%, #2f6fd0 0%, #18315f 55%, #0d1b36 100%); justify-content: center; }
-.hero::before { display: none; }
-.hero h1 { font-size: clamp(36px, 6.5cqw, 92px); letter-spacing: -.04em; }
-.hero .subtitle { font-size: clamp(16px, 2cqw, 28px); opacity: .9; }
-.hero .chips { display: flex; flex-wrap: wrap; gap: 1cqw; margin-top: 3cqh; }
-.chip { border: 1px solid rgba(255,255,255,.45); padding: .35em .9em; border-radius: 999px; font-size: clamp(11px, 1.2cqw, 16px); }
+/* 중간 발표 구성 요소: 색 없이 선으로만 구분 */
 .cards { display: grid; grid-template-columns: repeat(3, 1fr); gap: 2cqw; }
-.card { background: var(--soft); border-left: 4px solid var(--accent); padding: 2.2cqh 1.6cqw; font-size: clamp(13px, 1.45cqw, 19px); line-height: 1.55; }
-.card b { display: block; color: var(--accent); font-size: 1.15em; margin-bottom: .4em; }
-.card.warn { border-left-color: var(--warn); background: #fbeeee; }
-.card.ok { border-left-color: var(--accent-2); background: #e9f7f4; }
-.big-number { font-size: clamp(22px, 3.4cqw, 48px); font-weight: 700; color: var(--accent); letter-spacing: -.03em; }
+.card { border: 1px solid var(--line); padding: 2.2cqh 1.6cqw; font-size: clamp(13px, 1.45cqw, 19px); line-height: 1.55; }
+.card b { display: block; font-size: 1.1em; margin-bottom: .4em; }
+.big-number { font-size: clamp(22px, 3.4cqw, 48px); font-weight: 700; letter-spacing: -.03em; }
 .metrics { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1.6cqw; }
 .metric { border: 1px solid var(--line); padding: 1.8cqh 1.2cqw; }
 .metric small { display: block; color: var(--muted); font-size: clamp(11px, 1.1cqw, 14px); }
-.compare thead th { background: var(--accent); color: #fff; }
-.compare tbody tr:nth-child(odd) { background: var(--soft); }
 .demo-slide { padding: 2.5cqw 3cqw; gap: 1.5cqh; }
 .demo-slide .clip { max-height: 78cqh; }
 .demo-grid { display: grid; grid-template-columns: 1fr 2.6fr; gap: 2cqw; align-items: start; min-height: 0; }
 .demo-grid ol { font-size: clamp(12px, 1.35cqw, 17px); line-height: 1.6; padding-left: 1.2em; margin: 0; }
-.ending { background: linear-gradient(135deg, #0d1b36, #18315f); color: #fff; }
-.ending .takeaway { color: #cfe0ff; border-top-color: rgba(255,255,255,.3); }
 @media (max-width: 700px) { .cards, .metrics, .demo-grid { grid-template-columns: 1fr; } }
