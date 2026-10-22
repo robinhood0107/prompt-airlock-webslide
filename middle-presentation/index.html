@@ -21,7 +21,7 @@
         <header class="slide-heading"><h1 id="title-1">Prompt Airlock 중간 발표</h1></header>
         <ul class="content-list">
           <li>공공기관용 외부 LLM 개인정보 보호 게이트웨이</li>
-          <li>10월 진행 결과: 입력부터 응답까지 동작하는 MVP 구현과 시연</li>
+          <li>10월 진행 결과: 입력부터 응답까지 동작하는 MVP, 감사 기록과 운영 기능 구현</li>
         </ul>
       </section>
 
@@ -148,7 +148,7 @@
       <section class="slide" id="slide-11" aria-labelledby="title-11" hidden>
         <header class="slide-heading"><h2 id="title-11">검증 결과</h2></header>
         <div class="metrics">
-          <div class="metric"><span class="big-number">319개</span><small>자동 시험 통과, fuzz 병행</small></div>
+          <div class="metric"><span class="big-number">325개</span><small>자동 시험 통과, fuzz 병행</small></div>
           <div class="metric"><span class="big-number">0.987</span><small>사람 이름 재현율(최종 시험 셋 300문장)</small></div>
           <div class="metric"><span class="big-number">0건</span><small>시연 6장면의 외부 전송 원문</small></div>
           <div class="metric"><span class="big-number">21.6 ms</span><small>짧은 질문 p95(NER 포함)</small></div>
@@ -163,7 +163,8 @@
         <ul class="content-list">
           <li>탐지하지 못한 이름 13/600(2.2%) → 기관·거래처 이름을 보호어 목록으로 보완</li>
           <li>더 큰 NER 모델은 지연 10배 이상 증가 → 현재 모델 유지</li>
-          <li>다음: 감사 기록·운영 기능, 요청 단위 시간 제한, 실제 provider 연결과 평가</li>
+          <li>감사 기록(해시 연결, 1년 이상 보관)과 운영 기능(로컬 CLI, 자격 증명 보호)은 구현 완료</li>
+          <li>다음: 요청 단위 시간 제한, 실제 provider 연결과 평가</li>
         </ul>
       </section>
     </main>
