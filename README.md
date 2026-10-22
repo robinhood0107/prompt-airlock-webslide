@@ -1,38 +1,69 @@
 # Prompt Airlock · 프로젝트 진행보고
 
-월별 개발 진행상황과 발표 슬라이드를 공개하는 정적 웹사이트입니다. 실제 Prompt Airlock 프로그램 소스 저장소와 분리해 관리합니다.
+월별 진행상황과 발표 슬라이드를 공개하는 정적 웹사이트입니다. 실제 Prompt Airlock 프로그램 소스 저장소와 분리해 관리합니다.
 
-- 진행보고 아카이브: https://robinhood0107.github.io/prompt-airlock-webslide/
-- 10월 제출용 슬라이드: https://robinhood0107.github.io/prompt-airlock-webslide/2026-10/
-- 중간 발표 슬라이드: https://robinhood0107.github.io/prompt-airlock-webslide/middle-presentation/ (대본 middle-presentation/script.md, 애니메이션은 middle-presentation/animations 에서 `manim -qm --format=mp4 scenes.py CompareFlow PipelineSample SafetyChecks DemoReplay`)
+## 자료 목록
+
+| 자료 | 주소 | 파일 |
+|---|---|---|
+| 진행보고 목록 | https://robinhood0107.github.io/prompt-airlock-webslide/ | `index.html` |
+| 10월 진행보고 | https://robinhood0107.github.io/prompt-airlock-webslide/2026-10/ | `2026-10/` |
+| 중간 발표 슬라이드(11장) | https://robinhood0107.github.io/prompt-airlock-webslide/middle-presentation/ | `middle-presentation/index.html` |
+| 중간 발표 대본(약 8분 30초) | https://robinhood0107.github.io/prompt-airlock-webslide/middle-presentation/script.md | `middle-presentation/script.md` |
 
 ## 파일 구성
 
 ```text
-index.html
-assets/airlock.svg
-2026-10/
-  index.html
-  style.css
-  script.js
+index.html                      진행보고 목록
+assets/airlock.svg              아이콘
+2026-10/                        10월 진행보고(index.html, style.css, script.js)
+middle-presentation/
+  index.html                    중간 발표 슬라이드 11장
+  style.css, script.js          슬라이드 모양과 넘기기
+  script.md                     발표 대본(장별 말할 내용, 시간, 예상 질문, 시연 준비)
+  media/                        슬라이드에 넣은 영상(mp4)과 첫 화면 이미지(png)
+  animations/
+    scenes.py                   manim 애니메이션 원본
+    demo-run.json               시연 영상에 쓴 실제 실행 기록
+    requirements.txt            manim 판
+tools/check-assets.mjs          슬라이드가 참조하는 파일이 모두 커밋됐는지 확인
 ```
 
-프레임워크, 별도 빌드, 외부 폰트, CDN, JavaScript 라이브러리가 필요하지 않습니다. 정적 서버로 저장소를 열어 미리 확인할 수 있습니다.
+## 중간 발표 영상
+
+| 슬라이드 | 영상 | 길이 | 내용 |
+|---|---|---|---|
+| 7 기존 도구와 다른 점 | `CompareFlow.mp4` | 17.5초 | 두 처리 흐름과 차이 5가지 |
+| 9 가명이 오가는 과정 | `PipelineSample.mp4` | 15.6초 | 가명으로 보내고 되돌리기, Vault 보관과 삭제 |
+| 10 실수와 고장에도 새지 않게 | `SafetyChecks.mp4` | 17초 | 검사를 건너뛸 수 없는 구조, 고장 시 거절 |
+| 12 시연 | `DemoReplay.mp4` | 32.4초 | 게이트웨이를 실제로 실행해 보낸 질문 6개의 기록 |
+
+모두 720p 입니다. 다시 만들 때는 `middle-presentation/animations` 에서 다음을 실행하고, 결과(`media/videos/scenes/720p30/*.mp4`)를 `middle-presentation/media/` 로 복사합니다.
+
+```bash
+manim -qm --format=mp4 scenes.py CompareFlow PipelineSample SafetyChecks DemoReplay
+```
+
+manim 은 저장소 밖 가상환경(`.venv`, 커밋하지 않음)에 `requirements.txt` 판으로 설치합니다.
+
+## 커밋 전 확인
+
+```bash
+node tools/check-assets.mjs
+```
+
+- 슬라이드가 참조하는 영상·이미지·스크립트가 하나라도 커밋에서 빠지면 실패합니다.
+- 제외 규칙은 루트에만 걸리게 씁니다(`/media/`). `media/` 로 쓰면 `middle-presentation/media/` 까지 빠집니다.
+- merge 뒤에는 Pages 주소에서 영상이 실제로 열리는지 확인합니다.
 
 ## 슬라이드 조작
 
-좌우 화살표 키, Space, 화면의 이동 버튼, 마우스 휠 또는 가로 스와이프를 사용합니다. 첫 슬라이드와 마지막 슬라이드에서는 더 이상 이동하지 않습니다. 운영체제의 애니메이션 줄이기 설정을 따릅니다.
+좌우 화살표 키, Space, 화면의 이동 버튼, 마우스 휠 또는 가로 스와이프를 사용합니다. 운영체제의 애니메이션 줄이기 설정을 켜면 영상 대신 첫 화면 이미지가 보입니다.
 
-## 다음 월 자료 추가
+## 다음 자료 추가
 
-`2026-11/`처럼 월별 디렉터리를 만들고 정적 슬라이드 파일을 넣습니다. 루트 `index.html`의 목록에 해당 디렉터리로 이동하는 상대경로 링크를 추가합니다. 공개 자료에는 개인정보를 포함하지 않습니다.
+월별 디렉터리(예: `2026-11/`)를 만들고 정적 슬라이드 파일을 넣은 뒤, 루트 `index.html` 목록에 상대경로 링크를 추가합니다. 공개 자료에는 개인정보를 넣지 않습니다.
 
 ## GitHub Pages 설정
 
 Settings → Pages → Build and deployment → Deploy from a branch → `main` / `(root)` → Save.
-
-10월 자료에는 9월 조사 및 설계 결과와 앞으로의 구현·평가 계획을 담았습니다. 11월 말 개발 완료는 목표 일정입니다.
-
-## 검사
-
-- 슬라이드가 참조하는 파일(영상·이미지·스크립트)이 모두 커밋됐는지 `node tools/check-assets.mjs` 로 확인합니다.
