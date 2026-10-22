@@ -41,7 +41,18 @@
           <li>개인정보를 지우지 않고, 보내기 전에 가짜 이름표(가명)로 바꿉니다.</li>
           <li>예를 들어 "김민준"은 "⟦PERSON_PYZHWD8MSY⟧" 같은 의미 없는 글자로 바뀝니다.</li>
           <li>외부 LLM 은 가명만 보고 답을 만들고, 답이 돌아오면 가명을 다시 원래 값으로 바꿔 줍니다.</li>
+          <li>개인정보는 전화번호 같은 모양 규칙과, 문장 속 사람·기관 이름을 알아보는 모델(NER)로 찾습니다.</li>
           <li>가명과 원래 값의 짝은 기관 안에서만 보관하므로, 밖에서는 원래 값을 알 수 없습니다.</li>
+        </ul>
+      </section>
+
+      <section class="slide" id="slide-4" aria-labelledby="title-4" hidden>
+        <header class="slide-heading"><h2 id="title-4">가명 보관 프로그램(Vault)</h2></header>
+        <ul class="content-list dense">
+          <li>가명과 원래 값의 짝을 보관하는 작은 프로그램입니다. 게이트웨이와 따로 실행해서, 게이트웨이에 문제가 생겨도 짝 목록은 다른 곳에 있게 했습니다.</li>
+          <li>Rust 로 만들었습니다. Rust 는 메모리를 잘못 다루는 실수를 컴파일할 때 잡아 주는 언어라, 민감한 값을 다루는 부분에 썼습니다.</li>
+          <li>게이트웨이와는 같은 컴퓨터 안에서만 쓰는 통로로 대화하고, 프로그램을 실행한 사용자만 접근할 수 있습니다. 네트워크 포트는 열지 않습니다.</li>
+          <li>가명은 운영체제가 만드는 난수로 질문마다 새로 만들고, 질문이 끝나면 짝을 지웁니다. 지운 자리는 0 으로 덮어써서 메모리에 원래 값이 남지 않게 했습니다.</li>
         </ul>
       </section>
 
@@ -161,9 +172,9 @@
 
     <footer class="presentation-footer">
       <span class="navigation-hint">← → <span class="desktop-hint"> / Space / 휠</span><span class="mobile-hint"> / 스와이프</span></span>
-      <nav class="slide-controls" aria-label="슬라이드 이동"><button type="button" id="previous" aria-label="이전 슬라이드" disabled>←</button><output id="slide-counter" aria-live="polite" aria-atomic="true">1 / 11</output><button type="button" id="next" aria-label="다음 슬라이드">→</button></nav>
+      <nav class="slide-controls" aria-label="슬라이드 이동"><button type="button" id="previous" aria-label="이전 슬라이드" disabled>←</button><output id="slide-counter" aria-live="polite" aria-atomic="true">1 / 12</output><button type="button" id="next" aria-label="다음 슬라이드">→</button></nav>
     </footer>
-    <div class="progress-track" role="progressbar" aria-label="슬라이드 진행상황" aria-valuemin="1" aria-valuemax="11" aria-valuenow="1"><div class="progress-fill"></div></div>
+    <div class="progress-track" role="progressbar" aria-label="슬라이드 진행상황" aria-valuemin="1" aria-valuemax="12" aria-valuenow="1"><div class="progress-fill"></div></div>
   </div>
   <noscript><p class="noscript-note">슬라이드를 넘기려면 JavaScript를 활성화해 주세요.</p></noscript>
 </body>

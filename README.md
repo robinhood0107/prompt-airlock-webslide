@@ -32,3 +32,7 @@ assets/airlock.svg
 Settings → Pages → Build and deployment → Deploy from a branch → `main` / `(root)` → Save.
 
 10월 자료에는 9월 조사 및 설계 결과와 앞으로의 구현·평가 계획을 담았습니다. 11월 말 개발 완료는 목표 일정입니다.
+
+## 검사
+
+- 슬라이드가 참조하는 파일(영상·이미지·스크립트)이 모두 커밋됐는지 `node tools/check-assets.mjs` 로 확인합니다. PR 과 main push 때 GitHub Actions(assets)에서도 자동으로 돌립니다.
