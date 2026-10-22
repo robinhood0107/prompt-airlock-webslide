@@ -44,16 +44,7 @@
           <li>개인정보는 전화번호 같은 모양 규칙과, 문장 속 사람·기관 이름을 알아보는 모델(NER)로 찾습니다.</li>
           <li>가명과 원래 값의 짝은 기관 안에서만 보관하므로, 밖에서는 원래 값을 알 수 없습니다.</li>
         </ul>
-      </section>
-
-      <section class="slide" id="slide-4" aria-labelledby="title-4" hidden>
-        <header class="slide-heading"><h2 id="title-4">가명 보관 프로그램(Vault)</h2></header>
-        <ul class="content-list dense">
-          <li>가명과 원래 값의 짝을 보관하는 작은 프로그램입니다. 게이트웨이와 따로 실행해서, 게이트웨이에 문제가 생겨도 짝 목록은 다른 곳에 있게 했습니다.</li>
-          <li>Rust 로 만들었습니다. Rust 는 메모리를 잘못 다루는 실수를 컴파일할 때 잡아 주는 언어라, 민감한 값을 다루는 부분에 썼습니다.</li>
-          <li>게이트웨이와는 같은 컴퓨터 안에서만 쓰는 통로로 대화하고, 프로그램을 실행한 사용자만 접근할 수 있습니다. 네트워크 포트는 열지 않습니다.</li>
-          <li>가명은 운영체제가 만드는 난수로 질문마다 새로 만들고, 질문이 끝나면 짝을 지웁니다. 지운 자리는 0 으로 덮어써서 메모리에 원래 값이 남지 않게 했습니다.</li>
-        </ul>
+        <p class="takeaway">구현: 게이트웨이는 C++ 로, 짝을 보관하는 Vault 는 Rust 로 만든 별도 프로그램입니다. 둘은 같은 컴퓨터 안의 전용 통로로만 대화하고, 실행한 사용자만 접근할 수 있습니다.</p>
       </section>
 
       <section class="slide" id="slide-5" aria-labelledby="title-5" hidden>
@@ -96,13 +87,14 @@
             <div class="flow-group"><h3>보내고 <br>받을 때</h3><ol start="6"><li class="external-node">외부 LLM 으로 보내기</li><li>받은 답 검사</li><li>원래 값으로 되돌리기</li></ol></div>
           </div>
         </div>
+        <p class="source">찾는 규칙: 주민등록번호·카드번호는 형식과 검산 숫자로, 전화·계좌는 국내 형식표로, 이름은 NER 로 찾습니다. 주민등록번호·카드번호처럼 막을 종류와 이름·전화처럼 가명으로 바꿀 종류를 미리 정해 두었습니다.</p>
       </section>
 
       <section class="slide" id="slide-9" aria-labelledby="title-9" hidden>
         <header class="slide-heading"><h2 id="title-9">가명이 오가는 과정</h2></header>
         <div class="two-col">
           <ul class="content-list dense">
-            <li>밖으로 나가는 질문에는 가명만 들어갑니다.</li>
+            <li>밖으로 나가는 질문에는 가명만 들어갑니다. 가명은 운영체제 난수로 만든 10글자이고, Vault 가 질문 하나 동안만 짝을 기억한 뒤 지웁니다.</li>
             <li>답이 오면 이번 질문에서 만든 가명만 원래 값으로 되돌립니다.</li>
             <li>가명이 한 글자라도 바뀌어 돌아오면 되돌리지 않습니다. 다른 사람의 정보가 잘못 들어가는 일을 막기 위해서입니다.</li>
             <li>답의 링크 주소 안에 가명이 들어 있으면 답 전체를 막습니다. 링크를 누르는 순간 원래 값이 다른 사이트로 넘어갈 수 있기 때문입니다.</li>
@@ -172,9 +164,9 @@
 
     <footer class="presentation-footer">
       <span class="navigation-hint">← → <span class="desktop-hint"> / Space / 휠</span><span class="mobile-hint"> / 스와이프</span></span>
-      <nav class="slide-controls" aria-label="슬라이드 이동"><button type="button" id="previous" aria-label="이전 슬라이드" disabled>←</button><output id="slide-counter" aria-live="polite" aria-atomic="true">1 / 12</output><button type="button" id="next" aria-label="다음 슬라이드">→</button></nav>
+      <nav class="slide-controls" aria-label="슬라이드 이동"><button type="button" id="previous" aria-label="이전 슬라이드" disabled>←</button><output id="slide-counter" aria-live="polite" aria-atomic="true">1 / 11</output><button type="button" id="next" aria-label="다음 슬라이드">→</button></nav>
     </footer>
-    <div class="progress-track" role="progressbar" aria-label="슬라이드 진행상황" aria-valuemin="1" aria-valuemax="12" aria-valuenow="1"><div class="progress-fill"></div></div>
+    <div class="progress-track" role="progressbar" aria-label="슬라이드 진행상황" aria-valuemin="1" aria-valuemax="11" aria-valuenow="1"><div class="progress-fill"></div></div>
   </div>
   <noscript><p class="noscript-note">슬라이드를 넘기려면 JavaScript를 활성화해 주세요.</p></noscript>
 </body>
