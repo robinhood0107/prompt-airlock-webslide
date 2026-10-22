@@ -136,3 +136,7 @@ h3 { font-weight: 600; }
 .demo-grid { display: grid; grid-template-columns: 1fr 2.6fr; gap: 2cqw; align-items: start; min-height: 0; }
 .demo-grid ol { font-size: clamp(12px, 1.35cqw, 17px); line-height: 1.6; padding-left: 1.2em; margin: 0; }
 @media (max-width: 700px) { .cards, .metrics, .demo-grid { grid-template-columns: 1fr; } }
+.content-list.dense { font-size: clamp(14px, 1.5cqw, 20px); line-height: 1.6; }
+.content-list.dense li { margin-bottom: .6em; }
+.example { border: 1px solid var(--line); padding: 1.2cqh 1.4cqw; font-size: clamp(13px, 1.45cqw, 19px); }
+.example.inline { display: inline-block; margin-top: .4em; padding: .2em .6em; font-size: .9em; }

@@ -20,61 +20,80 @@
       <section class="slide" id="slide-1" aria-labelledby="title-1">
         <header class="slide-heading"><h1 id="title-1">Prompt Airlock 중간 발표</h1></header>
         <ul class="content-list">
-          <li>공공기관용 외부 LLM 개인정보 보호 게이트웨이</li>
-          <li>10월 진행 결과: 입력부터 응답까지 동작하는 MVP, 감사 기록과 운영 기능 구현</li>
+          <li>공공기관 직원이 외부 LLM(인터넷으로 쓰는 대화형 언어모델 서비스)을 쓸 때, 질문 속 개인정보가 밖으로 나가지 않게 막는 프로그램</li>
+          <li>10월 결과: 질문 입력부터 답 받기까지 실제로 동작하는 첫 버전(MVP), 감사 기록과 운영 기능</li>
         </ul>
+        <p class="takeaway">발표 순서: 문제 → 용어 → 기존 도구 → 차이 → 처리 순서 → 시연 → 검증 결과 → 다음 계획</p>
       </section>
 
       <section class="slide" id="slide-2" aria-labelledby="title-2" hidden>
-        <header class="slide-heading"><h2 id="title-2">문제</h2></header>
-        <ul class="content-list">
-          <li>업무 질문에 이름, 전화번호, 주민등록번호가 섞인 채 외부 LLM 으로 전송됨</li>
-          <li>개인정보를 삭제하면 "누구에게 연락할지" 같은 질문의 의미가 사라짐</li>
-          <li>방향: 개인정보를 가명으로 바꿔 보내고, 응답에서 원래 값으로 복원</li>
+        <header class="slide-heading"><h2 id="title-2">문제: 질문에 개인정보가 섞여 있음</h2></header>
+        <p class="example">"한빛시청 김민준 주무관에게 010-2345-6789 로 회의 일정을 알려 주는 안내문을 써 줘"</p>
+        <ul class="content-list dense">
+          <li>이 질문을 외부 LLM 에 그대로 보내면 이름·소속·전화번호가 외부 회사 서버에 저장될 수 있음</li>
+          <li>그렇다고 개인정보를 지우면 "누구에게, 어디로 연락하라는지" 알 수 없어 쓸모 있는 답을 받기 어려움</li>
+          <li>공공기관 보안 지침도 외부 LLM 에 보내는 입력과 받은 답에서 민감정보를 찾아 막도록 요구함</li>
         </ul>
-        <p class="takeaway">근거: 국가정보원 외부 언어모델 보안 가이드라인(2023), 국가망 보안체계(N2SF) — 입력·응답의 민감정보 탐지와 차단 요구</p>
+        <p class="takeaway">근거: 국가정보원 외부 언어모델 활용 보안 가이드라인(2023), 국가망 보안체계(N2SF)</p>
       </section>
 
       <section class="slide" id="slide-3" aria-labelledby="title-3" hidden>
-        <header class="slide-heading"><h2 id="title-3">용어</h2></header>
-        <div class="cards">
-          <div class="card"><b>provider</b>외부 LLM 을 API 로 제공하는 회사. 기관 밖에 있음.</div>
-          <div class="card"><b>게이트웨이</b>기관 앱과 provider 사이에서 요청을 대신 전달하는 서버. 모든 요청이 거쳐 가므로 한곳에서 검사 가능.</div>
-          <div class="card"><b>가명 token</b>원래 값 대신 넣는 임의 문자열. 예: 김민준 → ⟦PERSON_PYZHWD8MSY⟧. 원래 값과의 대응은 별도 Vault 프로세스에만 보관.</div>
-        </div>
+        <header class="slide-heading"><h2 id="title-3">해결 방향: 가명으로 바꿔 보내고, 답에서 되돌리기</h2></header>
+        <ol class="content-list dense">
+          <li>보내기 전: 개인정보 자리를 찾아 임의 문자열(가명)로 바꿈<br><span class="example inline">김민준 → ⟦PERSON_PYZHWD8MSY⟧, 010-2345-6789 → ⟦KOREAN_PHONE_N84Q9DY2F5⟧</span></li>
+          <li>외부 LLM 은 가명이 든 질문만 받고, 답에도 같은 가명을 넣어 돌려줌</li>
+          <li>답을 받으면 가명을 원래 값으로 다시 바꿔 직원에게 전달</li>
+        </ol>
+        <p class="takeaway">가명과 원래 값의 짝은 기관 안의 별도 프로그램(Vault)에만 저장 → 외부에서는 가명만 보고 원래 값을 알 수 없음</p>
       </section>
 
       <section class="slide" id="slide-4" aria-labelledby="title-4" hidden>
-        <header class="slide-heading"><h2 id="title-4">기존 도구 ① LiteLLM</h2></header>
-        <ul class="content-list">
-          <li>여러 provider 를 같은 API 형식으로 쓰게 해 주는 공개 프록시 서버</li>
-          <li>요청 전(pre_call)과 응답 후(post_call)에 검사 기능(가드레일)을 연결할 수 있음</li>
-          <li>개인정보 마스킹은 Presidio 를 별도 서비스로 호출해 처리, output_parse_pii 옵션으로 응답의 자리표시자를 원래 값으로 복원</li>
-        </ul>
-        <p class="takeaway">출처: LiteLLM 공식 문서 Guardrails › PII Masking (Presidio)</p>
+        <header class="slide-heading"><h2 id="title-4">용어 정리</h2></header>
+        <div class="cards">
+          <div class="card"><b>provider</b>외부 LLM 을 인터넷(API)으로 빌려주는 회사. 기관 밖에 있으므로 개인정보를 보내면 안 되는 곳.</div>
+          <div class="card"><b>게이트웨이</b>기관 직원의 앱과 provider 사이에서 요청을 대신 전달하는 서버. 모든 질문이 여기를 지나가므로 한곳에서 검사 가능.</div>
+          <div class="card"><b>탐지 · NER</b>탐지: 질문에서 개인정보 위치를 찾는 일. NER: 문장 속 사람·기관 이름을 찾도록 학습된 모델(전화번호처럼 모양이 정해지지 않은 이름을 찾을 때 사용).</div>
+        </div>
+        <div class="cards" style="margin-top:2cqh">
+          <div class="card"><b>token(가명)</b>원래 값 대신 넣는 임의 문자열. 요청마다 새로 만들어 다른 요청에서는 쓸 수 없음.</div>
+          <div class="card"><b>Vault</b>가명과 원래 값의 짝을 보관하는 별도 프로그램. 게이트웨이와 따로 실행돼 한쪽이 뚫려도 피해를 줄임.</div>
+          <div class="card"><b>fail closed</b>검사 도구가 고장 나거나 결과가 불확실하면 "보내지 않는 쪽"을 택하는 원칙.</div>
+        </div>
       </section>
 
       <section class="slide" id="slide-5" aria-labelledby="title-5" hidden>
-        <header class="slide-heading"><h2 id="title-5">기존 도구 ② Presidio</h2></header>
-        <ul class="content-list">
-          <li>Analyzer: 정규식, 체크섬, NER(문장 속 이름을 찾는 모델)로 개인정보 위치 탐지</li>
-          <li>Anonymizer: 찾은 위치를 치환, 마스킹, 해시, 암호화 등으로 변환</li>
-          <li>LiteLLM 연동의 기본 언어는 영어. 주민등록번호, 국내 계좌·전화 형식은 직접 추가 필요</li>
+        <header class="slide-heading"><h2 id="title-5">기존 도구 ① LiteLLM</h2></header>
+        <ul class="content-list dense">
+          <li>여러 회사의 provider 를 같은 요청 형식으로 쓸 수 있게 해 주는 공개 프록시(중간 전달 서버)</li>
+          <li>가드레일: 요청을 보내기 전(pre_call)과 답을 받은 뒤(post_call)에 검사 프로그램을 끼우는 기능</li>
+          <li>개인정보 가리기: 검사 프로그램으로 Presidio 를 별도 서버로 띄워 호출</li>
+          <li>output_parse_pii 옵션을 켜면 답 속의 자리표시자(가린 자리)를 원래 값으로 되돌림</li>
         </ul>
-        <p class="takeaway">Microsoft 공개 도구. 본 설계의 "탐지 → 변환" 구조도 이를 참고함</p>
+        <p class="takeaway">정리: 범용 중계 서버 + 필요하면 개인정보 검사기를 붙이는 구조 · 출처: LiteLLM 공식 문서 Guardrails › PII Masking (Presidio)</p>
       </section>
 
       <section class="slide" id="slide-6" aria-labelledby="title-6" hidden>
-        <header class="slide-heading"><h2 id="title-6">LiteLLM + Presidio 와의 차이</h2></header>
+        <header class="slide-heading"><h2 id="title-6">기존 도구 ② Presidio</h2></header>
+        <ul class="content-list dense">
+          <li>Microsoft 가 공개한 개인정보 탐지·가리기 도구</li>
+          <li>Analyzer(찾기): 정규식(글자 모양 규칙), 체크섬(번호 검산), NER 로 개인정보 위치를 찾음</li>
+          <li>Anonymizer(바꾸기): 찾은 자리를 다른 글자로 치환, 별표로 가리기, 해시, 암호화 등으로 처리</li>
+          <li>LiteLLM 연동의 기본 언어는 영어. 주민등록번호, 국내 계좌·전화번호 같은 한국 형식은 사용자가 직접 규칙을 만들어 넣어야 함</li>
+        </ul>
+        <p class="takeaway">이 프로젝트도 "찾기 → 바꾸기" 두 단계 구조를 그대로 따름. 다른 점은 다음 장</p>
+      </section>
+
+      <section class="slide" id="slide-7" aria-labelledby="title-7" hidden>
+        <header class="slide-heading"><h2 id="title-7">LiteLLM + Presidio 와의 차이</h2></header>
         <div class="two-col">
           <table class="compare">
             <thead><tr><th>항목</th><th>LiteLLM + Presidio</th><th>Prompt Airlock</th></tr></thead>
             <tbody>
-              <tr><td>한국 형식</td><td>직접 추가</td><td>형식표·한국어 NER 내장</td></tr>
-              <tr><td>대응 보관</td><td>프록시 내부</td><td>별도 Vault 프로세스</td></tr>
-              <tr><td>검사기 장애 시</td><td>문서에 명시 없음</td><td>요청 거절</td></tr>
-              <tr><td>응답 처리</td><td>자리표시자 복원</td><td>재검사 후 복원</td></tr>
-              <tr><td>기밀 등급(C·S)</td><td>-</td><td>외부 전송 차단</td></tr>
+              <tr><td>한국 개인정보 형식</td><td>사용자가 직접 추가</td><td>국내 형식표와 한국어 NER 를 처음부터 포함</td></tr>
+              <tr><td>가명 짝 보관</td><td>프록시 프로그램 안</td><td>별도 Vault 프로그램(요청이 끝나면 삭제)</td></tr>
+              <tr><td>검사 도구 고장 시</td><td>공식 문서에 명시 없음</td><td>요청을 거절(fail closed)</td></tr>
+              <tr><td>받은 답 처리</td><td>자리표시자를 되돌림</td><td>답을 다시 검사한 뒤 되돌림</td></tr>
+              <tr><td>기밀 등급(C·S) 문서</td><td>구분 없음</td><td>외부 전송 자체를 막음</td></tr>
             </tbody>
           </table>
           <div>
@@ -84,96 +103,122 @@
         </div>
       </section>
 
-      <section class="slide architecture" id="slide-7" aria-labelledby="title-7" hidden>
-        <header class="slide-heading"><h2 id="title-7">처리 순서</h2></header>
+      <section class="slide architecture" id="slide-8" aria-labelledby="title-8" hidden>
+        <header class="slide-heading"><h2 id="title-8">처리 순서(8단계)</h2></header>
         <div class="architecture-layout">
-          <p class="boundary-statement">모든 검사를 통과한 요청만 provider 로 전송한다.<br><br>어느 단계든 실패하면 요청을 거절한다(fail closed).</p>
+          <p class="boundary-statement">1~5단계를 모두 통과한 질문만 provider 로 전송.<br><br>어느 단계든 실패하면 그 자리에서 거절.</p>
           <div class="flow" aria-label="요청부터 응답까지 처리 순서">
-            <div class="flow-group"><h3>입구</h3><ol start="1"><li>TLS·출처 인증</li><li class="accent-node">등급 확인</li></ol></div>
-            <div class="flow-group"><h3>개인정보 <br>보호</h3><ol start="3"><li>탐지(규칙 + 한국어 NER)</li><li>Vault 가명 발급</li><li>잔여 검사</li></ol></div>
-            <div class="flow-group"><h3>외부 LLM <br>및 응답</h3><ol start="6"><li class="external-node">provider</li><li>응답 검사</li><li>같은 요청 범위에서 복원</li></ol></div>
-          </div>
-        </div>
-      </section>
-
-      <section class="slide" id="slide-8" aria-labelledby="title-8" hidden>
-        <header class="slide-heading"><h2 id="title-8">가명 처리와 복원</h2></header>
-        <div class="two-col">
-          <ul class="content-list">
-            <li>외부로는 token 만 전송</li>
-            <li>응답의 token 은 같은 요청에서 발급한 것만 복원</li>
-            <li>한 글자라도 바뀐 token 은 복원하지 않음</li>
-          </ul>
-          <div>
-            <video class="clip" src="./media/PipelineSample.mp4" poster="./media/PipelineSample.png" controls muted playsinline preload="metadata"></video>
-            <img class="clip-poster" src="./media/PipelineSample.png" alt="원문이 token 으로 나가고 응답에서 복원되는 과정">
+            <div class="flow-group"><h3>입구</h3><ol start="1"><li>암호화 연결(TLS)과 등록된 앱인지 확인</li><li class="accent-node">문서 등급 확인: C·S 면 거절</li></ol></div>
+            <div class="flow-group"><h3>개인정보 <br>보호</h3><ol start="3"><li>개인정보 찾기(규칙 + 한국어 NER)</li><li>Vault 에서 가명 받아 바꾸기</li><li>바꾼 질문에 원문이 남았는지 한 번 더 찾기</li></ol></div>
+            <div class="flow-group"><h3>외부 LLM <br>및 응답</h3><ol start="6"><li class="external-node">provider 로 전송</li><li>받은 답 검사(위험한 내용·링크)</li><li>같은 요청의 가명만 원래 값으로 되돌림</li></ol></div>
           </div>
         </div>
       </section>
 
       <section class="slide" id="slide-9" aria-labelledby="title-9" hidden>
-        <header class="slide-heading"><h2 id="title-9">타입으로 막는 경계</h2></header>
+        <header class="slide-heading"><h2 id="title-9">가명이 오가는 과정</h2></header>
         <div class="two-col">
-          <ul class="content-list">
-            <li>질문은 RawPrompt → PolicyChecked → Protected → VerifiedPrompt 순서로만 변환</li>
-            <li>provider 요청은 VerifiedPrompt 로만 생성 가능, 단계를 건너뛰면 컴파일 실패</li>
-            <li>탐지기·Vault 장애 시에도 우회 경로 없음</li>
+          <ul class="content-list dense">
+            <li>밖으로 나가는 질문에는 가명만 들어감</li>
+            <li>답이 오면 이번 요청에서 만든 가명만 원래 값으로 되돌림</li>
+            <li>한 글자라도 바뀐 가명은 비슷해 보여도 되돌리지 않음 → 다른 사람의 값이 잘못 들어가는 사고 방지</li>
+            <li>답의 링크 주소 안에 가명이 있으면 답 전체를 거절 → 링크를 누르는 순간 원래 값이 외부 사이트로 전달되는 것을 막음</li>
           </ul>
           <div>
-            <video class="clip" src="./media/Typestate.mp4" poster="./media/Typestate.png" controls muted playsinline preload="metadata"></video>
-            <img class="clip-poster" src="./media/Typestate.png" alt="네 단계 타입과 provider 요청 생성 경로">
-            <video class="clip" src="./media/FailClosed.mp4" poster="./media/FailClosed.png" controls muted playsinline preload="metadata" style="margin-top:1cqh"></video>
+            <video class="clip" src="./media/PipelineSample.mp4" poster="./media/PipelineSample.png" controls muted playsinline preload="metadata"></video>
+            <img class="clip-poster" src="./media/PipelineSample.png" alt="원문이 가명으로 나가고 답에서 복원되는 과정">
           </div>
         </div>
       </section>
 
-      <section class="slide demo-slide" id="slide-10" aria-labelledby="title-10" hidden>
-        <header class="slide-heading"><h2 id="title-10">시연</h2></header>
-        <div class="demo-grid">
-          <ol>
-            <li>등급 S 요청 → 403</li>
-            <li>주민등록번호·카드번호 → 400, 종류만 응답</li>
-            <li>이름·전화·이메일 → token 으로 전송 후 복원</li>
-            <li>응답의 링크 안 token → 응답 거절</li>
-            <li>base64 로 인코딩한 주민등록번호 → 400</li>
-            <li>변조된 token → 복원하지 않음</li>
-          </ol>
+      <section class="slide" id="slide-10" aria-labelledby="title-10" hidden>
+        <header class="slide-heading"><h2 id="title-10">검사를 건너뛸 수 없게 만든 방법</h2></header>
+        <div class="two-col">
+          <ul class="content-list dense">
+            <li>타입: 프로그램에서 값의 종류를 구분하는 표시. 종류가 맞지 않으면 컴파일(프로그램 만들기) 단계에서 오류</li>
+            <li>질문은 RawPrompt(원본) → PolicyChecked(등급 확인) → Protected(가명 처리) → VerifiedPrompt(최종 검사 통과) 순서로만 바뀜</li>
+            <li>provider 로 보낼 요청은 VerifiedPrompt 로만 만들 수 있음 → 검사를 건너뛴 코드는 아예 만들어지지 않음</li>
+            <li>Vault·탐지 모델이 고장 나도 "검사 없이 보내기" 경로가 없음</li>
+          </ul>
           <div>
-            <video class="clip" src="./media/DemoReplay.mp4" poster="./media/DemoReplay.png" controls muted playsinline preload="metadata"></video>
-            <p class="source">게이트웨이(127.0.0.1:18443)와 mock provider(19443)를 실제로 실행해 기록한 결과</p>
+            <video class="clip" src="./media/Typestate.mp4" poster="./media/Typestate.png" controls muted playsinline preload="metadata"></video>
+            <img class="clip-poster" src="./media/Typestate.png" alt="네 단계 타입과 provider 요청 생성 경로">
+          </div>
+        </div>
+      </section>
+
+      <section class="slide" id="slide-10b" aria-labelledby="title-10b" hidden>
+        <header class="slide-heading"><h2 id="title-10b">고장 나면 보내지 않기(fail closed)</h2></header>
+        <div class="two-col">
+          <ul class="content-list dense">
+            <li>NER 모델이 멈춤 → 개인정보를 다 찾았는지 알 수 없으므로 거절</li>
+            <li>Vault 가 멈춤 → 가명을 받을 수 없으므로 거절</li>
+            <li>가명으로 바꾼 뒤에도 원문이 남음 → 거절</li>
+            <li>세 경우 모두 provider 호출 0번(시험으로 확인)</li>
+          </ul>
+          <div>
+            <video class="clip" src="./media/FailClosed.mp4" poster="./media/FailClosed.png" controls muted playsinline preload="metadata"></video>
+            <img class="clip-poster" src="./media/FailClosed.png" alt="단계마다 실패하면 provider 호출 없이 거절하는 그림">
           </div>
         </div>
       </section>
 
       <section class="slide" id="slide-11" aria-labelledby="title-11" hidden>
-        <header class="slide-heading"><h2 id="title-11">검증 결과</h2></header>
-        <div class="metrics">
-          <div class="metric"><span class="big-number">325개</span><small>자동 시험 통과, fuzz 병행</small></div>
-          <div class="metric"><span class="big-number">0.987</span><small>사람 이름 재현율(최종 시험 셋 300문장)</small></div>
-          <div class="metric"><span class="big-number">0건</span><small>시연 6장면의 외부 전송 원문</small></div>
-          <div class="metric"><span class="big-number">21.6 ms</span><small>짧은 질문 p95(NER 포함)</small></div>
-          <div class="metric"><span class="big-number">5.8 ms</span><small>4 KiB 질문 p95(NER 없이, 목표 20 ms)</small></div>
-          <div class="metric"><span class="big-number">오류 0</span><small>동시 8개 요청, 약 115 req/s</small></div>
-        </div>
-        <p class="source">출처: github.com/robinhood0107/PromptAirlock 이슈 #108, #110, #119</p>
+        <header class="slide-heading"><h2 id="title-11">기록과 운영</h2></header>
+        <ul class="content-list dense">
+          <li>감사 기록: 요청마다 언제, 어느 앱이, 어떤 결과였는지 로컬 파일에 한 줄씩 저장(원래 값은 저장하지 않음)</li>
+          <li>외부 전송 이력: 실제로 밖에 보낸 가명 질문과 받은 답을 1년 이상 보관(거절된 요청은 결과만 기록)</li>
+          <li>변조 확인: 각 줄에 앞 줄의 해시(내용 요약값)를 함께 저장 → 중간 줄을 고치거나 지우면 검증에서 발견</li>
+          <li>운영: 기록 열람·검증은 서버에서만 명령어로, provider 열쇠(API key)는 암호화된 파일로만 보관</li>
+        </ul>
       </section>
 
-      <section class="slide" id="slide-12" aria-labelledby="title-12" hidden>
-        <header class="slide-heading"><h2 id="title-12">한계와 다음 계획</h2></header>
-        <ul class="content-list">
-          <li>탐지하지 못한 이름 13/600(2.2%) → 기관·거래처 이름을 보호어 목록으로 보완</li>
-          <li>더 큰 NER 모델은 지연 10배 이상 증가 → 현재 모델 유지</li>
-          <li>감사 기록(해시 연결, 1년 이상 보관)과 운영 기능(로컬 CLI, 자격 증명 보호)은 구현 완료</li>
-          <li>다음: 요청 단위 시간 제한, 실제 provider 연결과 평가</li>
+      <section class="slide demo-slide" id="slide-12" aria-labelledby="title-12" hidden>
+        <header class="slide-heading"><h2 id="title-12">시연: 실제로 실행해 보낸 질문 6개</h2></header>
+        <div class="demo-grid">
+          <ol>
+            <li>S 등급 문서 → 403(거절), 밖으로 나간 것 없음</li>
+            <li>주민등록번호·카드번호 → 400(거절), 어떤 종류였는지만 알려 줌</li>
+            <li>이름·전화·이메일 → 가명으로 나가고, 받은 답에서 원래 값으로 복원</li>
+            <li>LLM 이 가명을 링크 주소에 넣음 → 답 전체 거절</li>
+            <li>base64(문자를 다른 글자로 바꿔 숨기는 방식)로 감춘 주민등록번호 → 풀어서 찾아 거절</li>
+            <li>LLM 이 가명 한 글자를 바꿈 → 되돌리지 않고 거절</li>
+          </ol>
+          <div>
+            <video class="clip" src="./media/DemoReplay.mp4" poster="./media/DemoReplay.png" controls muted playsinline preload="metadata"></video>
+            <p class="source">게이트웨이(127.0.0.1:18443)와 시험용 provider(19443)를 실제로 실행해 기록한 결과. 왼쪽: 보낸 질문과 받은 결과, 오른쪽: provider 가 실제로 받은 내용</p>
+          </div>
+        </div>
+      </section>
+
+      <section class="slide" id="slide-13" aria-labelledby="title-13" hidden>
+        <header class="slide-heading"><h2 id="title-13">검증 결과</h2></header>
+        <div class="metrics">
+          <div class="metric"><span class="big-number">325개</span><small>자동 시험 모두 통과. 무작위 입력을 수백만 번 넣는 시험(fuzz)도 통과</small></div>
+          <div class="metric"><span class="big-number">98.7%</span><small>시험 문장 300개 속 사람 이름 중 찾아낸 비율</small></div>
+          <div class="metric"><span class="big-number">0건</span><small>시연 6개에서 원래 값이 밖으로 나간 횟수</small></div>
+          <div class="metric"><span class="big-number">21.6 ms</span><small>짧은 질문 하나를 처리하는 시간(100번 중 95번은 이 안). LLM 답 시간(수 초)에 비해 작음</small></div>
+          <div class="metric"><span class="big-number">5.8 ms</span><small>4 KiB(약 1,300자) 질문, NER 없이 처리 시간. 목표 20 ms 이하</small></div>
+          <div class="metric"><span class="big-number">오류 0</span><small>8개 요청을 동시에 계속 보낼 때, 초당 약 115개 처리</small></div>
+        </div>
+        <p class="source">출처: github.com/robinhood0107/PromptAirlock 이슈 #108(이름 찾기), #110(더 큰 모델 비교), #119(속도)</p>
+      </section>
+
+      <section class="slide" id="slide-14" aria-labelledby="title-14" hidden>
+        <header class="slide-heading"><h2 id="title-14">한계와 다음 계획</h2></header>
+        <ul class="content-list dense">
+          <li>찾지 못한 이름: 600개 중 13개(2.2%). 기관·거래처 이름을 "보호어 목록"에 넣어 보완</li>
+          <li>더 큰 NER 모델 2개도 비교: 조금 더 잘 찾지만 10배 이상 느려 현재 모델 유지</li>
+          <li>다음 단계: 요청마다 처리 시간 제한, 실제 provider 연결, 사용성 평가</li>
         </ul>
       </section>
     </main>
 
     <footer class="presentation-footer">
       <span class="navigation-hint">← → <span class="desktop-hint"> / Space / 휠</span><span class="mobile-hint"> / 스와이프</span></span>
-      <nav class="slide-controls" aria-label="슬라이드 이동"><button type="button" id="previous" aria-label="이전 슬라이드" disabled>←</button><output id="slide-counter" aria-live="polite" aria-atomic="true">1 / 12</output><button type="button" id="next" aria-label="다음 슬라이드">→</button></nav>
+      <nav class="slide-controls" aria-label="슬라이드 이동"><button type="button" id="previous" aria-label="이전 슬라이드" disabled>←</button><output id="slide-counter" aria-live="polite" aria-atomic="true">1 / 15</output><button type="button" id="next" aria-label="다음 슬라이드">→</button></nav>
     </footer>
-    <div class="progress-track" role="progressbar" aria-label="슬라이드 진행상황" aria-valuemin="1" aria-valuemax="12" aria-valuenow="1"><div class="progress-fill"></div></div>
+    <div class="progress-track" role="progressbar" aria-label="슬라이드 진행상황" aria-valuemin="1" aria-valuemax="15" aria-valuenow="1"><div class="progress-fill"></div></div>
   </div>
   <noscript><p class="noscript-note">슬라이드를 넘기려면 JavaScript를 활성화해 주세요.</p></noscript>
 </body>
