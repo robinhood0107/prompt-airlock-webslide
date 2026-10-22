@@ -40,48 +40,24 @@
       <section class="slide" id="slide-3" aria-labelledby="title-3" hidden>
         <header class="slide-heading"><h2 id="title-3">해결 방향: 가명으로 바꿔 보내고, 답에서 되돌리기</h2></header>
         <ol class="content-list dense">
-          <li>보내기 전: 개인정보 자리를 찾아 임의 문자열(가명)로 바꿈<br><span class="example inline">김민준 → ⟦PERSON_PYZHWD8MSY⟧, 010-2345-6789 → ⟦KOREAN_PHONE_N84Q9DY2F5⟧</span></li>
-          <li>외부 LLM 은 가명이 든 질문만 받고, 답에도 같은 가명을 넣어 돌려줌</li>
-          <li>답을 받으면 가명을 원래 값으로 다시 바꿔 직원에게 전달</li>
+          <li>보내기 전: 개인정보 자리를 임의 문자열(가명 token)로 바꿈<br><span class="example inline">김민준 → ⟦PERSON_PYZHWD8MSY⟧, 010-2345-6789 → ⟦KOREAN_PHONE_N84Q9DY2F5⟧</span></li>
+          <li>외부 LLM 회사(provider)는 가명이 든 질문만 받고, 답에도 같은 가명을 넣어 돌려줌</li>
+          <li>답을 받으면 가명을 원래 값으로 되돌려 직원에게 전달</li>
         </ol>
-        <p class="takeaway">가명과 원래 값의 짝은 기관 안의 별도 프로그램(Vault)에만 저장 → 외부에서는 가명만 보고 원래 값을 알 수 없음</p>
+        <p class="takeaway">게이트웨이: 직원 앱과 provider 사이에서 모든 요청을 대신 전달·검사하는 서버 · Vault: 가명과 원래 값의 짝을 보관하는 별도 프로그램</p>
       </section>
 
-      <section class="slide" id="slide-4" aria-labelledby="title-4" hidden>
-        <header class="slide-heading"><h2 id="title-4">용어 정리</h2></header>
-        <div class="cards">
-          <div class="card"><b>provider</b>외부 LLM 을 인터넷(API)으로 빌려주는 회사. 기관 밖에 있으므로 개인정보를 보내면 안 되는 곳.</div>
-          <div class="card"><b>게이트웨이</b>기관 직원의 앱과 provider 사이에서 요청을 대신 전달하는 서버. 모든 질문이 여기를 지나가므로 한곳에서 검사 가능.</div>
-          <div class="card"><b>탐지 · NER</b>탐지: 질문에서 개인정보 위치를 찾는 일. NER: 문장 속 사람·기관 이름을 찾도록 학습된 모델(전화번호처럼 모양이 정해지지 않은 이름을 찾을 때 사용).</div>
-        </div>
-        <div class="cards" style="margin-top:2cqh">
-          <div class="card"><b>token(가명)</b>원래 값 대신 넣는 임의 문자열. 요청마다 새로 만들어 다른 요청에서는 쓸 수 없음.</div>
-          <div class="card"><b>Vault</b>가명과 원래 값의 짝을 보관하는 별도 프로그램. 게이트웨이와 따로 실행돼 한쪽이 뚫려도 피해를 줄임.</div>
-          <div class="card"><b>fail closed</b>검사 도구가 고장 나거나 결과가 불확실하면 "보내지 않는 쪽"을 택하는 원칙.</div>
-        </div>
-      </section>
 
       <section class="slide" id="slide-5" aria-labelledby="title-5" hidden>
-        <header class="slide-heading"><h2 id="title-5">기존 도구 ① LiteLLM</h2></header>
+        <header class="slide-heading"><h2 id="title-5">기존 도구: LiteLLM 과 Presidio</h2></header>
         <ul class="content-list dense">
-          <li>여러 회사의 provider 를 같은 요청 형식으로 쓸 수 있게 해 주는 공개 프록시(중간 전달 서버)</li>
-          <li>가드레일: 요청을 보내기 전(pre_call)과 답을 받은 뒤(post_call)에 검사 프로그램을 끼우는 기능</li>
-          <li>개인정보 가리기: 검사 프로그램으로 Presidio 를 별도 서버로 띄워 호출</li>
-          <li>output_parse_pii 옵션을 켜면 답 속의 자리표시자(가린 자리)를 원래 값으로 되돌림</li>
+          <li>LiteLLM: 여러 provider 를 같은 형식으로 쓰게 해 주는 공개 중간 전달 서버. 보내기 전·받은 뒤에 검사 프로그램(가드레일)을 끼울 수 있음</li>
+          <li>Presidio(Microsoft): 개인정보 "찾기(Analyzer) → 바꾸기(Anonymizer)" 도구. LiteLLM 에 검사 프로그램으로 붙여 씀</li>
+          <li>LiteLLM 연동의 기본 언어는 영어 → 주민등록번호 같은 한국 형식은 직접 추가해야 함</li>
         </ul>
-        <p class="takeaway">정리: 범용 중계 서버 + 필요하면 개인정보 검사기를 붙이는 구조 · 출처: LiteLLM 공식 문서 Guardrails › PII Masking (Presidio)</p>
+        <p class="takeaway">이 프로젝트도 "찾기 → 바꾸기" 구조를 따름 · 출처: LiteLLM 공식 문서 PII Masking (Presidio), microsoft/presidio</p>
       </section>
 
-      <section class="slide" id="slide-6" aria-labelledby="title-6" hidden>
-        <header class="slide-heading"><h2 id="title-6">기존 도구 ② Presidio</h2></header>
-        <ul class="content-list dense">
-          <li>Microsoft 가 공개한 개인정보 탐지·가리기 도구</li>
-          <li>Analyzer(찾기): 정규식(글자 모양 규칙), 체크섬(번호 검산), NER 로 개인정보 위치를 찾음</li>
-          <li>Anonymizer(바꾸기): 찾은 자리를 다른 글자로 치환, 별표로 가리기, 해시, 암호화 등으로 처리</li>
-          <li>LiteLLM 연동의 기본 언어는 영어. 주민등록번호, 국내 계좌·전화번호 같은 한국 형식은 사용자가 직접 규칙을 만들어 넣어야 함</li>
-        </ul>
-        <p class="takeaway">이 프로젝트도 "찾기 → 바꾸기" 두 단계 구조를 그대로 따름. 다른 점은 다음 장</p>
-      </section>
 
       <section class="slide" id="slide-7" aria-labelledby="title-7" hidden>
         <header class="slide-heading"><h2 id="title-7">LiteLLM + Presidio 와의 차이</h2></header>
@@ -132,13 +108,12 @@
       </section>
 
       <section class="slide" id="slide-10" aria-labelledby="title-10" hidden>
-        <header class="slide-heading"><h2 id="title-10">검사를 건너뛸 수 없게 만든 방법</h2></header>
+        <header class="slide-heading"><h2 id="title-10">검사를 건너뛸 수 없게, 고장 나면 보내지 않게</h2></header>
         <div class="two-col">
           <ul class="content-list dense">
-            <li>타입: 프로그램에서 값의 종류를 구분하는 표시. 종류가 맞지 않으면 컴파일(프로그램 만들기) 단계에서 오류</li>
-            <li>질문은 RawPrompt(원본) → PolicyChecked(등급 확인) → Protected(가명 처리) → VerifiedPrompt(최종 검사 통과) 순서로만 바뀜</li>
-            <li>provider 로 보낼 요청은 VerifiedPrompt 로만 만들 수 있음 → 검사를 건너뛴 코드는 아예 만들어지지 않음</li>
-            <li>Vault·탐지 모델이 고장 나도 "검사 없이 보내기" 경로가 없음</li>
+            <li>질문은 4단계 타입(원본 → 등급 확인 → 가명 처리 → 최종 검사 통과)으로만 바뀜</li>
+            <li>provider 요청은 마지막 타입으로만 만들 수 있음 → 검사를 건너뛴 코드는 컴파일되지 않음</li>
+            <li>NER·Vault 가 멈추거나 원문이 남으면 거절(fail closed), provider 호출 0</li>
           </ul>
           <div>
             <video class="clip" src="./media/Typestate.mp4" poster="./media/Typestate.png" controls muted playsinline preload="metadata"></video>
@@ -147,31 +122,7 @@
         </div>
       </section>
 
-      <section class="slide" id="slide-10b" aria-labelledby="title-10b" hidden>
-        <header class="slide-heading"><h2 id="title-10b">고장 나면 보내지 않기(fail closed)</h2></header>
-        <div class="two-col">
-          <ul class="content-list dense">
-            <li>NER 모델이 멈춤 → 개인정보를 다 찾았는지 알 수 없으므로 거절</li>
-            <li>Vault 가 멈춤 → 가명을 받을 수 없으므로 거절</li>
-            <li>가명으로 바꾼 뒤에도 원문이 남음 → 거절</li>
-            <li>세 경우 모두 provider 호출 0번(시험으로 확인)</li>
-          </ul>
-          <div>
-            <video class="clip" src="./media/FailClosed.mp4" poster="./media/FailClosed.png" controls muted playsinline preload="metadata"></video>
-            <img class="clip-poster" src="./media/FailClosed.png" alt="단계마다 실패하면 provider 호출 없이 거절하는 그림">
-          </div>
-        </div>
-      </section>
 
-      <section class="slide" id="slide-11" aria-labelledby="title-11" hidden>
-        <header class="slide-heading"><h2 id="title-11">기록과 운영</h2></header>
-        <ul class="content-list dense">
-          <li>감사 기록: 요청마다 언제, 어느 앱이, 어떤 결과였는지 로컬 파일에 한 줄씩 저장(원래 값은 저장하지 않음)</li>
-          <li>외부 전송 이력: 실제로 밖에 보낸 가명 질문과 받은 답을 1년 이상 보관(거절된 요청은 결과만 기록)</li>
-          <li>변조 확인: 각 줄에 앞 줄의 해시(내용 요약값)를 함께 저장 → 중간 줄을 고치거나 지우면 검증에서 발견</li>
-          <li>운영: 기록 열람·검증은 서버에서만 명령어로, provider 열쇠(API key)는 암호화된 파일로만 보관</li>
-        </ul>
-      </section>
 
       <section class="slide demo-slide" id="slide-12" aria-labelledby="title-12" hidden>
         <header class="slide-heading"><h2 id="title-12">시연: 실제로 실행해 보낸 질문 6개</h2></header>
@@ -205,20 +156,20 @@
       </section>
 
       <section class="slide" id="slide-14" aria-labelledby="title-14" hidden>
-        <header class="slide-heading"><h2 id="title-14">한계와 다음 계획</h2></header>
+        <header class="slide-heading"><h2 id="title-14">정리와 다음 계획</h2></header>
         <ul class="content-list dense">
-          <li>찾지 못한 이름: 600개 중 13개(2.2%). 기관·거래처 이름을 "보호어 목록"에 넣어 보완</li>
-          <li>더 큰 NER 모델 2개도 비교: 조금 더 잘 찾지만 10배 이상 느려 현재 모델 유지</li>
-          <li>다음 단계: 요청마다 처리 시간 제한, 실제 provider 연결, 사용성 평가</li>
+          <li>구현 완료: 입력부터 응답까지 동작하는 게이트웨이, 감사 기록(1년 이상 보관, 변조 확인), 운영 기능</li>
+          <li>한계: 이름 600개 중 13개(2.2%) 못 찾음 → 기관·거래처 이름을 보호어 목록으로 보완</li>
+          <li>다음: 요청마다 처리 시간 제한, 실제 provider 연결, 사용성 평가</li>
         </ul>
       </section>
     </main>
 
     <footer class="presentation-footer">
       <span class="navigation-hint">← → <span class="desktop-hint"> / Space / 휠</span><span class="mobile-hint"> / 스와이프</span></span>
-      <nav class="slide-controls" aria-label="슬라이드 이동"><button type="button" id="previous" aria-label="이전 슬라이드" disabled>←</button><output id="slide-counter" aria-live="polite" aria-atomic="true">1 / 15</output><button type="button" id="next" aria-label="다음 슬라이드">→</button></nav>
+      <nav class="slide-controls" aria-label="슬라이드 이동"><button type="button" id="previous" aria-label="이전 슬라이드" disabled>←</button><output id="slide-counter" aria-live="polite" aria-atomic="true">1 / 11</output><button type="button" id="next" aria-label="다음 슬라이드">→</button></nav>
     </footer>
-    <div class="progress-track" role="progressbar" aria-label="슬라이드 진행상황" aria-valuemin="1" aria-valuemax="15" aria-valuenow="1"><div class="progress-fill"></div></div>
+    <div class="progress-track" role="progressbar" aria-label="슬라이드 진행상황" aria-valuemin="1" aria-valuemax="11" aria-valuenow="1"><div class="progress-fill"></div></div>
   </div>
   <noscript><p class="noscript-note">슬라이드를 넘기려면 JavaScript를 활성화해 주세요.</p></noscript>
 </body>
