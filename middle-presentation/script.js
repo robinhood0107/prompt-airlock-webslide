@@ -27,7 +27,7 @@
   previous.addEventListener('click', () => showSlide(current - 1));
   next.addEventListener('click', () => showSlide(current + 1));
   document.addEventListener('keydown', (event) => {
-    if (event.altKey || event.ctrlKey || event.metaKey || event.target.closest('input, textarea, select, [contenteditable="true"]')) return;
+    if (event.altKey || event.ctrlKey || event.metaKey || event.target.closest('video, audio, input, textarea, select, [contenteditable="true"]')) return;
     if (event.key === ' ' && event.target.closest('button, a')) return;
     if (event.key === 'ArrowRight' || event.key === 'ArrowLeft' || event.key === ' ') {
       event.preventDefault();
