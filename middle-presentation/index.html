@@ -6,8 +6,8 @@
   <meta name="description" content="Prompt Airlock 중간 발표: 문제, 기존 도구(LiteLLM, Presidio)와의 비교, 설계, 시연, 검증 결과, 다음 계획.">
   <title>Prompt Airlock · 중간 발표</title>
   <link rel="icon" href="../assets/airlock.svg" type="image/svg+xml">
-  <link rel="stylesheet" href="./style.css">
-  <script src="./script.js" defer></script>
+  <link rel="stylesheet" href="./style.css?v=20261023">
+  <script src="./script.js?v=20261023" defer></script>
 </head>
 <body>
   <div class="presentation">
@@ -71,8 +71,11 @@
             </tbody>
           </table>
           <div>
-            <video class="clip" src="./media/CompareFlow.mp4" poster="./media/CompareFlow.png" controls muted playsinline preload="auto"></video>
-            <img class="clip-poster" src="./media/CompareFlow.png" alt="두 구조의 처리 단계 비교">
+            <video class="clip" poster="./media/CompareFlow.png" controls muted playsinline preload="auto">
+              <source src="./media/CompareFlow.mp4" type="video/mp4">
+              <source src="./media/CompareFlow.webm" type="video/webm">
+            </video>
+            <p class="source"><a href="./media/CompareFlow.mp4" target="_blank" rel="noopener">영상 직접 열기 (MP4)</a> · <a href="./media/CompareFlow.webm" target="_blank" rel="noopener">다른 형식으로 열기 (WebM)</a></p>
           </div>
         </div>
       </section>
@@ -100,8 +103,11 @@
             <li>답의 링크 주소 안에 가명이 들어 있으면 답 전체를 막습니다. 링크를 누르는 순간 원래 값이 다른 사이트로 넘어갈 수 있기 때문입니다.</li>
           </ul>
           <div>
-            <video class="clip" src="./media/PipelineSample.mp4" poster="./media/PipelineSample.png" controls muted playsinline preload="auto"></video>
-            <img class="clip-poster" src="./media/PipelineSample.png" alt="원문이 가명으로 나가고 답에서 복원되는 과정">
+            <video class="clip" poster="./media/PipelineSample.png" controls muted playsinline preload="auto">
+              <source src="./media/PipelineSample.mp4" type="video/mp4">
+              <source src="./media/PipelineSample.webm" type="video/webm">
+            </video>
+            <p class="source"><a href="./media/PipelineSample.mp4" target="_blank" rel="noopener">영상 직접 열기 (MP4)</a> · <a href="./media/PipelineSample.webm" target="_blank" rel="noopener">다른 형식으로 열기 (WebM)</a></p>
           </div>
         </div>
       </section>
@@ -115,8 +121,11 @@
             <li>개인정보를 찾는 모델이나 가명 보관 프로그램이 멈추면, 질문을 보내지 않고 거절합니다.</li>
           </ul>
           <div>
-            <video class="clip" src="./media/SafetyChecks.mp4" poster="./media/SafetyChecks.png" controls muted playsinline preload="auto"></video>
-            <img class="clip-poster" src="./media/SafetyChecks.png" alt="검사 단계를 모두 거친 질문만 보낼 수 있는 구조">
+            <video class="clip" poster="./media/SafetyChecks.png" controls muted playsinline preload="auto">
+              <source src="./media/SafetyChecks.mp4" type="video/mp4">
+              <source src="./media/SafetyChecks.webm" type="video/webm">
+            </video>
+            <p class="source"><a href="./media/SafetyChecks.mp4" target="_blank" rel="noopener">영상 직접 열기 (MP4)</a> · <a href="./media/SafetyChecks.webm" target="_blank" rel="noopener">다른 형식으로 열기 (WebM)</a></p>
           </div>
         </div>
       </section>
@@ -133,7 +142,11 @@
             <li>LLM 이 가명을 바꿔 오면 되돌리지 않습니다.</li>
           </ol>
           <div>
-            <video class="clip" src="./media/DemoReplay.mp4" poster="./media/DemoReplay.png" controls muted playsinline preload="auto"></video>
+            <video class="clip" poster="./media/DemoReplay.png" controls muted playsinline preload="auto">
+              <source src="./media/DemoReplay.mp4" type="video/mp4">
+              <source src="./media/DemoReplay.webm" type="video/webm">
+            </video>
+            <p class="source"><a href="./media/DemoReplay.mp4" target="_blank" rel="noopener">영상 직접 열기 (MP4)</a> · <a href="./media/DemoReplay.webm" target="_blank" rel="noopener">다른 형식으로 열기 (WebM)</a></p>
             <p class="source">실제로 프로그램을 실행해 질문 6개를 보낸 기록입니다. 왼쪽은 보낸 질문과 받은 결과, 오른쪽은 외부 LLM 쪽이 실제로 받은 내용입니다.</p>
           </div>
         </div>
