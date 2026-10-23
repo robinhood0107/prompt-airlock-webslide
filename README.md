@@ -44,7 +44,7 @@ tools/check-assets.mjs          슬라이드가 참조하는 파일이 모두 �
 manim -qm --format=mp4 scenes.py CompareFlow PipelineSample SafetyChecks DemoReplay
 ```
 
-MP4를 다시 만들면 WebM도 다음과 같이 갱신합니다.
+MP4를 다시 만들면 저장소 루트에서 WebM도 다음과 같이 갱신합니다.
 
 ```bash
 for name in CompareFlow PipelineSample SafetyChecks DemoReplay; do
